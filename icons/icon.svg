@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- พื้นเต็มกรอบ: ระบบปฏิบัติการตัดมุมโค้งให้เอง -->
+  <rect width="512" height="512" fill="#1c33c4"/>
+  <!-- บันไดภาษี 4 ขั้น -->
+  <path d="M122 390V346a6 6 0 0 1 6-6h46v-38a6 6 0 0 1 6-6h46v-38a6 6 0 0 1 6-6h46v-38a6 6 0 0 1 6-6h92a6 6 0 0 1 6 6v176a6 6 0 0 1-6 6H128a6 6 0 0 1-6-6z" fill="#ffffff"/>
+  <!-- เหรียญบาท -->
+  <circle cx="337" cy="162" r="46" fill="#4fd1a0"/>
+  <path d="M325 138h17a12 12 0 0 1 0 24h-17zM325 162h20a12 12 0 0 1 0 24h-20zM325 136v52M335 128v10M335 186v10" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
