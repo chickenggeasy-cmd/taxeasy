@@ -3,7 +3,7 @@ import rules2568 from '../../rules/2568.json'
 import rules2569 from '../../rules/2569.json'
 import { calculateTax, measureDeduction } from './calculate'
 import { emptyInput } from './defaults'
-import { planSuggestions } from './plan'
+import { compareDividendChoice, planSuggestions } from './plan'
 import type { TaxInput, TaxRules } from './types'
 
 const R68 = rules2568 as TaxRules
@@ -192,5 +192,45 @@ describe('วางแผนภาษี', () => {
     const rmf = plan.find((p) => p.key === 'rmf')!
     expect(rmf.room).toBe(180_000)
     expect(rmf.saving).toBe(20_600 - 5_050)
+  })
+})
+
+describe('เงินปันผล 40(4)', () => {
+  it('นำมารวมคำนวณ ได้เครดิตภาษีเงินปันผล 20/80 และภาษีที่ถูกหัก 10% คืน', () => {
+    const res = calculateTax(
+      make((i) => {
+        i.income.investment.dividends = 100_000
+        i.income.investment.includeDividends = true
+      }),
+      R68,
+    )
+    expect(res.dividendCredit).toBe(25_000)
+    expect(res.investmentWithheld).toBe(10_000)
+    expect(res.totalIncome).toBe(125_000)
+    expect(res.tax).toBe(0)
+    expect(res.balance).toBe(-35_000)
+  })
+
+  it('ไม่นำมารวม = ภาษีถูกหักเป็นที่สุด ไม่มีผลต่อการคำนวณ', () => {
+    const res = calculateTax(make((i) => (i.income.investment.dividends = 100_000)), R68)
+    expect(res.totalIncome).toBe(0)
+    expect(res.balance).toBe(0)
+  })
+
+  it('คนฐานภาษีสูง ไม่ควรนำมารวม', () => {
+    const input = make((i) => {
+      i.income.salary = 5_000_000
+      i.income.investment.dividends = 100_000
+    })
+    expect(compareDividendChoice(input, R68)?.better).toBe('exclude')
+    input.income.salary = 300_000
+    expect(compareDividendChoice(input, R68)?.better).toBe('include')
+  })
+
+  it('กฎเก่าที่ไม่มี investment ใช้ค่าเริ่มต้น', () => {
+    const { investment: _omit, ...old } = R68
+    void _omit
+    const res = calculateTax(make((i) => ((i.income.investment.interest = 10_000), (i.income.investment.includeInterest = true))), old as TaxRules)
+    expect(res.investmentWithheld).toBe(1_500)
   })
 })

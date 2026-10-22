@@ -21,7 +21,10 @@ export interface FilingStep {
 export function formType(input: TaxInput): FormType {
   const i = input.income
   const other =
-    i.freelance + i.royalty + Object.values(i.rent).reduce((a, b) => a + b, 0) + i.professional.medical + i.professional.other + i.contract.amount + i.business.amount
+    (i.investment.includeDividends ? i.investment.dividends + i.investment.fundDividends : 0) +
+    (i.investment.includeInterest ? i.investment.interest : 0) +
+    i.freelance +
+    i.royalty + Object.values(i.rent).reduce((a, b) => a + b, 0) + i.professional.medical + i.professional.other + i.contract.amount + i.business.amount
   return other > 0 ? 'PND90' : 'PND91'
 }
 
@@ -130,6 +133,12 @@ export function documentChecklist(input: TaxInput, rules: TaxRules): DocItem[] {
 
   add(i.salary > 0, 'pnd50', 'หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) จากนายจ้าง', 'มียอดเงินเดือน ภาษีที่ถูกหัก ประกันสังคม และกองทุนสำรองเลี้ยงชีพ')
   add(i.freelance + i.professional.medical + i.professional.other + i.contract.amount + i.royalty > 0, 'pnd50-other', '50 ทวิ จากผู้จ้างงานอื่น ๆ', 'ขอจากทุกบริษัทที่จ่ายค่าจ้างฟรีแลนซ์/ค่าวิชาชีพ และหักภาษีไว้')
+  add(
+    (i.investment.includeDividends && i.investment.dividends + i.investment.fundDividends > 0) || (i.investment.includeInterest && i.investment.interest > 0),
+    'dividend',
+    'หนังสือรับรองการจ่ายเงินปันผล/ดอกเบี้ย',
+    'ขอจากบริษัทหลักทรัพย์ ศูนย์รับฝากหลักทรัพย์ (TSD) หรือธนาคาร ต้องมียอดเครดิตภาษีเงินปันผลระบุไว้',
+  )
   add(Object.values(i.rent).some((v) => v > 0), 'rent', 'สัญญาเช่าและหลักฐานรับค่าเช่า', 'ใช้ยืนยันรายได้ค่าเช่าทั้งปี')
   add(i.business.amount > 0 || i.contract.amount > 0, 'biz', 'บัญชีรายรับ-รายจ่ายของธุรกิจ', i.business.useActual || i.contract.useActual ? 'หักค่าใช้จ่ายตามจริง ต้องเก็บใบเสร็จ/ใบกำกับภาษีค่าใช้จ่ายทุกใบ' : 'แม้หักแบบเหมา ก็ควรมีบันทึกรายรับไว้')
   add(input.credits.prepaid > 0, 'pnd94', 'แบบ ภ.ง.ด.94 และใบเสร็จภาษีครึ่งปี', 'ใช้หักภาษีที่จ่ายไปแล้วตอนกลางปี')

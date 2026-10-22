@@ -50,6 +50,10 @@ export function buildContext(input: TaxInput, result: TaxResult, rules: TaxRules
     `ฐานภาษีสูงสุด ${pct(result.marginalRate)} อัตราภาษีจริง ${pct(result.effectiveRate)}`,
     `ภาษีหัก ณ ที่จ่าย/จ่ายแล้ว ${fmt(result.credits)} → ${result.balance < 0 ? `ได้คืน ${fmt(-result.balance)}` : `จ่ายเพิ่ม ${fmt(result.balance)}`}`,
   ]
+  const inv = input.income.investment
+  if (inv.dividends + inv.fundDividends + inv.interest > 0) {
+    lines.push(`เงินปันผลหุ้นไทย ${fmt(inv.dividends)} (บริษัทเสียภาษี ${pct(inv.dividendCorpRate)}) เงินปันผลกองทุน ${fmt(inv.fundDividends)} ดอกเบี้ย ${fmt(inv.interest)} · ${inv.includeDividends ? 'นำเงินปันผลมารวมคำนวณ' : 'ไม่นำเงินปันผลมารวม'}`)
+  }
   if (input.deductions.children.length) lines.push(`บุตรเกิดปี: ${input.deductions.children.join(', ')}`)
   return lines.join('\n')
 }

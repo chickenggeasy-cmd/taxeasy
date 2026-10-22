@@ -42,6 +42,9 @@ function validate_rules(mixed $r, ?int $expectYear = null): array
     $mt = $r['minimumTax'] ?? [];
     if (!$rate($mt['rate'] ?? null) || !$num($mt['incomeThreshold'] ?? null) || !$num($mt['exemptIfNotExceed'] ?? null)) $e[] = 'minimumTax ไม่ครบ';
     if (!$num($r['elderlyExemption'] ?? null)) $e[] = 'ต้องมี elderlyExemption';
+    if (isset($r['investment']) && (!$rate($r['investment']['dividendWithholdingRate'] ?? null) || !$rate($r['investment']['interestWithholdingRate'] ?? null))) {
+        $e[] = 'investment ต้องมี dividendWithholdingRate และ interestWithholdingRate (0–1)';
+    }
 
     $ex = $r['expenses'] ?? [];
     foreach (['employment', 'royalty'] as $k) if (!$rateMax($ex[$k] ?? null)) $e[] = "expenses.$k ต้องมี rate และ max";

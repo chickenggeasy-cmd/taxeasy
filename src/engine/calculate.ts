@@ -57,6 +57,18 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   const flatOrActual = (part: { amount: number; useActual: boolean; actualExpense: number }, rate: number) =>
     part.useActual ? clamp(part.actualExpense, part.amount) : part.amount * rate
 
+  // 40(4): นำมารวมคำนวณเฉพาะเมื่อผู้ใช้เลือก (ไม่เลือก = ภาษีที่ถูกหักไว้ถือเป็นที่สุด)
+  const inv = income.investment
+  const invRates = rules.investment ?? { dividendWithholdingRate: 0.1, interestWithholdingRate: 0.15 }
+  const corpRate = Math.min(Math.max(inv.dividendCorpRate || 0, 0), 0.5)
+  const dividendCredit = inv.includeDividends ? round2((inv.dividends * corpRate) / (1 - corpRate)) : 0
+  const investmentGross =
+    (inv.includeDividends ? inv.dividends + dividendCredit + inv.fundDividends : 0) + (inv.includeInterest ? inv.interest : 0)
+  const investmentWithheld = round2(
+    (inv.includeDividends ? (inv.dividends + inv.fundDividends) * invRates.dividendWithholdingRate : 0) +
+      (inv.includeInterest ? inv.interest * invRates.interestWithholdingRate : 0),
+  )
+
   const incomes: IncomeLine[] = [
     { id: '40-1-2', label: 'เงินเดือน/ค่าจ้าง และงานรับจ้างทั่วไป 40(1)(2)', gross: employmentGross, expense: employmentExpense },
     { id: '40-3', label: 'ค่าลิขสิทธิ์ 40(3)', gross: income.royalty, expense: Math.min(income.royalty * ex.royalty.rate, ex.royalty.max) },
@@ -67,6 +79,7 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
       gross: income.professional.medical + income.professional.other,
       expense: income.professional.medical * ex.professional.medical + income.professional.other * ex.professional.other,
     },
+    { id: '40-4', label: 'เงินปันผล/ดอกเบี้ย 40(4)', gross: investmentGross, expense: 0 },
     { id: '40-7', label: 'รับเหมา 40(7)', gross: income.contract.amount, expense: flatOrActual(income.contract, ex.contract.rate) },
     { id: '40-8', label: 'ธุรกิจ/ค้าขาย/อื่น ๆ 40(8)', gross: income.business.amount, expense: flatOrActual(income.business, ex.business.rate) },
   ]
@@ -220,7 +233,7 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   }
   const usedMinimumTax = minimumTax !== null && minimumTax > prog.tax
   const tax = usedMinimumTax ? minimumTax! : prog.tax
-  const credits = round2((input.credits.withheld || 0) + (input.credits.prepaid || 0))
+  const credits = round2((input.credits.withheld || 0) + (input.credits.prepaid || 0) + dividendCredit + investmentWithheld)
 
   return {
     incomes,
@@ -236,6 +249,8 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     minimumTax,
     usedMinimumTax,
     tax,
+    dividendCredit,
+    investmentWithheld,
     credits,
     balance: round2(tax - credits),
     effectiveRate: totalIncome > 0 ? tax / totalIncome : 0,

@@ -23,6 +23,8 @@ const LABELS = [
     'minimumTax.incomeThreshold' => 'วิธี 0.5%: ใช้เมื่อเงินได้ 40(2)–(8) ตั้งแต่',
     'minimumTax.exemptIfNotExceed' => 'วิธี 0.5%: ยกเว้นถ้าภาษีไม่เกิน',
     'elderlyExemption' => 'ยกเว้นเงินได้ผู้สูงอายุ 65+/ผู้พิการ',
+    'investment.dividendWithholdingRate' => 'ภาษีหัก ณ ที่จ่าย เงินปันผล',
+    'investment.interestWithholdingRate' => 'ภาษีหัก ณ ที่จ่าย ดอกเบี้ย',
     'expenses.employment.rate' => '40(1)(2) หักค่าใช้จ่าย: อัตรา',
     'expenses.employment.max' => '40(1)(2) หักค่าใช้จ่าย: สูงสุด',
     'expenses.royalty.rate' => '40(3) ลิขสิทธิ์: อัตรา',
@@ -204,7 +206,7 @@ $ro = $editable ? '' : ' disabled';
   </section>
 <?php else: ?>
   <?php
-  $groups = ['ทั่วไป' => ['notes', 'filingDeadlines', 'minimumTax', 'elderlyExemption'], 'ค่าใช้จ่าย (อัตรา 0.5 = 50%)' => ['expenses'], 'ค่าลดหย่อน (บาท / อัตรา 0.3 = 30%)' => ['deductions']];
+  $groups = ['ทั่วไป' => ['notes', 'filingDeadlines', 'minimumTax', 'elderlyExemption', 'investment'], 'ค่าใช้จ่าย (อัตรา 0.5 = 50%)' => ['expenses'], 'ค่าลดหย่อน (บาท / อัตรา 0.3 = 30%)' => ['deductions']];
   $flat = flatten($rules);
   foreach ($groups as $title => $prefixes): ?>
   <section class="card">

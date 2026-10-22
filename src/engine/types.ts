@@ -39,6 +39,8 @@ export interface TaxRules {
   brackets: Bracket[]
   minimumTax: { rate: number; incomeThreshold: number; exemptIfNotExceed: number }
   elderlyExemption: number
+  /** ภาษีหัก ณ ที่จ่ายของเงินได้ 40(4) (ไม่มีในกฎเก่า → ใช้ค่าเริ่มต้น) */
+  investment?: { dividendWithholdingRate: number; interestWithholdingRate: number }
   expenses: {
     employment: RateMax
     royalty: RateMax
@@ -95,6 +97,19 @@ export interface TaxInput {
     professional: { medical: number; other: number }
     contract: { amount: number; useActual: boolean; actualExpense: number }
     business: { amount: number; useActual: boolean; actualExpense: number }
+    /** เงินได้ 40(4) */
+    investment: {
+      /** เงินปันผลจากบริษัทที่เสียภาษีนิติบุคคล (ได้เครดิตภาษี) */
+      dividends: number
+      /** อัตราภาษีนิติบุคคลของบริษัทที่จ่ายเงินปันผล เช่น 0.2 */
+      dividendCorpRate: number
+      /** เงินปันผลที่ไม่มีเครดิตภาษี เช่น จากกองทุนรวม หรือกิจการ BOI */
+      fundDividends: number
+      includeDividends: boolean
+      /** ดอกเบี้ยที่ถูกหักภาษี 15% (เช่น เงินฝากประจำ) */
+      interest: number
+      includeInterest: boolean
+    }
   }
   deductions: {
     /** ปีเกิดของบุตรแต่ละคน (พ.ศ.) เรียงตามลำดับการเกิด */
@@ -173,6 +188,10 @@ export interface TaxResult {
   minimumTax: number | null
   usedMinimumTax: boolean
   tax: number
+  /** เครดิตภาษีเงินปันผล (เมื่อเลือกนำมารวมคำนวณ) */
+  dividendCredit: number
+  /** ภาษีที่ถูกหักจากเงินปันผล/ดอกเบี้ยที่นำมารวมคำนวณ */
+  investmentWithheld: number
   credits: number
   /** บวก = ต้องจ่ายเพิ่ม, ลบ = ได้คืน */
   balance: number

@@ -4,30 +4,93 @@
   "updatedAt": "2026-10-22",
   "notes": "กฎภาษีเงินได้บุคคลธรรมดา ปีภาษี 2568 (เงินได้ 1 ม.ค. – 31 ธ.ค. 2568 ยื่นภาษีต้นปี 2569)",
   "sources": [
-    { "title": "กรมสรรพากร – ภาษีเงินได้บุคคลธรรมดา", "url": "https://www.rd.go.th/59670.html" },
-    { "title": "ตลาดหลักทรัพย์ฯ – อัปเดตสิทธิลดหย่อนภาษี 2568", "url": "https://www.set.or.th/th/education-research/education/happymoney/knowledge/article/137-tsi-update-thailand-tax-deduction-2568" },
-    { "title": "Thai PBS – เงื่อนไขเที่ยวดีมีคืน 2568", "url": "https://www.thaipbs.or.th/news/content/358312" }
+    {
+      "title": "กรมสรรพากร – ภาษีเงินได้บุคคลธรรมดา",
+      "url": "https://www.rd.go.th/59670.html"
+    },
+    {
+      "title": "ตลาดหลักทรัพย์ฯ – อัปเดตสิทธิลดหย่อนภาษี 2568",
+      "url": "https://www.set.or.th/th/education-research/education/happymoney/knowledge/article/137-tsi-update-thailand-tax-deduction-2568"
+    },
+    {
+      "title": "Thai PBS – เงื่อนไขเที่ยวดีมีคืน 2568",
+      "url": "https://www.thaipbs.or.th/news/content/358312"
+    }
   ],
-  "filingDeadlines": { "paper": "2569-03-31", "online": "2569-04-08" },
+  "filingDeadlines": {
+    "paper": "2569-03-31",
+    "online": "2569-04-08"
+  },
   "brackets": [
-    { "upTo": 150000, "rate": 0 },
-    { "upTo": 300000, "rate": 0.05 },
-    { "upTo": 500000, "rate": 0.1 },
-    { "upTo": 750000, "rate": 0.15 },
-    { "upTo": 1000000, "rate": 0.2 },
-    { "upTo": 2000000, "rate": 0.25 },
-    { "upTo": 5000000, "rate": 0.3 },
-    { "upTo": null, "rate": 0.35 }
+    {
+      "upTo": 150000,
+      "rate": 0
+    },
+    {
+      "upTo": 300000,
+      "rate": 0.05
+    },
+    {
+      "upTo": 500000,
+      "rate": 0.1
+    },
+    {
+      "upTo": 750000,
+      "rate": 0.15
+    },
+    {
+      "upTo": 1000000,
+      "rate": 0.2
+    },
+    {
+      "upTo": 2000000,
+      "rate": 0.25
+    },
+    {
+      "upTo": 5000000,
+      "rate": 0.3
+    },
+    {
+      "upTo": null,
+      "rate": 0.35
+    }
   ],
-  "minimumTax": { "rate": 0.005, "incomeThreshold": 120000, "exemptIfNotExceed": 5000 },
+  "minimumTax": {
+    "rate": 0.005,
+    "incomeThreshold": 120000,
+    "exemptIfNotExceed": 5000
+  },
   "elderlyExemption": 190000,
+  "investment": {
+    "dividendWithholdingRate": 0.1,
+    "interestWithholdingRate": 0.15
+  },
   "expenses": {
-    "employment": { "rate": 0.5, "max": 100000 },
-    "royalty": { "rate": 0.5, "max": 100000 },
-    "rent": { "building": 0.3, "agriLand": 0.2, "otherLand": 0.15, "vehicle": 0.3, "other": 0.1 },
-    "professional": { "medical": 0.6, "other": 0.3 },
-    "contract": { "rate": 0.6 },
-    "business": { "rate": 0.6 }
+    "employment": {
+      "rate": 0.5,
+      "max": 100000
+    },
+    "royalty": {
+      "rate": 0.5,
+      "max": 100000
+    },
+    "rent": {
+      "building": 0.3,
+      "agriLand": 0.2,
+      "otherLand": 0.15,
+      "vehicle": 0.3,
+      "other": 0.1
+    },
+    "professional": {
+      "medical": 0.6,
+      "other": 0.3
+    },
+    "contract": {
+      "rate": 0.6
+    },
+    "business": {
+      "rate": 0.6
+    }
   },
   "deductions": {
     "personal": 60000,
@@ -43,14 +106,29 @@
     "lifeHealthCombined": 100000,
     "spouseLifeInsurance": 10000,
     "parentHealthInsurance": 15000,
-    "pensionInsurance": { "rate": 0.15, "max": 200000 },
-    "pvd": { "rate": 0.15, "max": 500000 },
-    "gpf": { "rate": 0.3, "max": 500000 },
+    "pensionInsurance": {
+      "rate": 0.15,
+      "max": 200000
+    },
+    "pvd": {
+      "rate": 0.15,
+      "max": 500000
+    },
+    "gpf": {
+      "rate": 0.3,
+      "max": 500000
+    },
     "nsf": 30000,
-    "rmf": { "rate": 0.3, "max": 500000 },
+    "rmf": {
+      "rate": 0.3,
+      "max": 500000
+    },
     "ssf": null,
     "retirementCombined": 500000,
-    "thaiEsg": { "rate": 0.3, "max": 300000 },
+    "thaiEsg": {
+      "rate": 0.3,
+      "max": 300000
+    },
     "thaiEsgxLtf": 300000,
     "homeLoanInterest": 100000,
     "socialEnterprise": 100000,
@@ -63,8 +141,18 @@
       "label": "Easy E-Receipt 2.0",
       "description": "ซื้อสินค้า/บริการจากร้านที่จด VAT และได้รับ e-Tax Invoice หรือ e-Receipt ระหว่าง 16 ม.ค. – 28 ก.พ. 2568",
       "inputs": [
-        { "id": "general", "label": "สินค้า/บริการทั่วไป", "multiplier": 1, "maxActual": 30000 },
-        { "id": "otop", "label": "สินค้า OTOP / วิสาหกิจชุมชน / วิสาหกิจเพื่อสังคม", "multiplier": 1, "maxActual": 20000 }
+        {
+          "id": "general",
+          "label": "สินค้า/บริการทั่วไป",
+          "multiplier": 1,
+          "maxActual": 30000
+        },
+        {
+          "id": "otop",
+          "label": "สินค้า OTOP / วิสาหกิจชุมชน / วิสาหกิจเพื่อสังคม",
+          "multiplier": 1,
+          "maxActual": 20000
+        }
       ],
       "maxDeduction": 50000
     },
@@ -73,8 +161,16 @@
       "label": "เที่ยวดีมีคืน 2568",
       "description": "ค่าที่พักและค่าอาหารที่จ่ายให้ผู้ประกอบการจด VAT ระหว่าง 29 ต.ค. – 15 ธ.ค. 2568 (ยอดเกิน 10,000 บาทต้องเป็น e-Tax Invoice)",
       "inputs": [
-        { "id": "secondary", "label": "เมืองรอง (หักได้ 1.5 เท่า)", "multiplier": 1.5 },
-        { "id": "main", "label": "เมืองหลัก (หักได้ 1 เท่า)", "multiplier": 1 }
+        {
+          "id": "secondary",
+          "label": "เมืองรอง (หักได้ 1.5 เท่า)",
+          "multiplier": 1.5
+        },
+        {
+          "id": "main",
+          "label": "เมืองหลัก (หักได้ 1 เท่า)",
+          "multiplier": 1
+        }
       ],
       "maxActual": 20000,
       "maxDeduction": 30000
@@ -84,7 +180,12 @@
       "label": "สร้างบ้านใหม่",
       "description": "ค่าจ้างสร้างบ้านใหม่ที่จ่ายระหว่าง 9 เม.ย. 2567 – 31 ธ.ค. 2568 หักได้ 10,000 บาท ต่อทุก 1,000,000 บาท",
       "inputs": [
-        { "id": "cost", "label": "ค่าจ้างสร้างบ้าน (ตามใบกำกับภาษี)", "multiplier": 0.01, "step": 1000000 }
+        {
+          "id": "cost",
+          "label": "ค่าจ้างสร้างบ้าน (ตามใบกำกับภาษี)",
+          "multiplier": 0.01,
+          "step": 1000000
+        }
       ],
       "maxDeduction": 100000
     }

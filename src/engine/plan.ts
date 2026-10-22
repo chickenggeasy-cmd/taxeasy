@@ -1,6 +1,16 @@
 import { calculateTax } from './calculate'
 import type { DeductionKey, TaxInput, TaxRules } from './types'
 
+/** เทียบผล: นำเงินปันผลมารวมคำนวณ vs ให้ภาษีที่ถูกหักเป็นที่สุด */
+export function compareDividendChoice(input: TaxInput, rules: TaxRules): { include: number; exclude: number; better: 'include' | 'exclude' } | null {
+  const inv = input.income.investment
+  if (inv.dividends + inv.fundDividends <= 0) return null
+  const withChoice = (v: boolean) => calculateTax({ ...input, income: { ...input.income, investment: { ...inv, includeDividends: v } } }, rules).balance
+  const include = withChoice(true)
+  const exclude = withChoice(false)
+  return { include, exclude, better: include < exclude ? 'include' : 'exclude' }
+}
+
 export interface PlanSuggestion {
   key: DeductionKey
   label: string

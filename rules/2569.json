@@ -61,6 +61,10 @@
     "exemptIfNotExceed": 5000
   },
   "elderlyExemption": 190000,
+  "investment": {
+    "dividendWithholdingRate": 0.1,
+    "interestWithholdingRate": 0.15
+  },
   "expenses": {
     "employment": {
       "rate": 0.5,

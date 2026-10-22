@@ -4,7 +4,7 @@ import { IconTile } from '../components/icons'
 import { PageHero } from '../components/ui'
 import { fmt, pct } from '../lib/format'
 
-export function Plan({ input, rules, result, onAdd }: { input: TaxInput; rules: TaxRules; result: TaxResult; onAdd: () => void }) {
+export function Plan({ input, rules, result, onAdd, onMarket }: { input: TaxInput; rules: TaxRules; result: TaxResult; onAdd: () => void; onMarket: () => void }) {
   const items = planSuggestions(input, rules)
   const zeroTax = result.tax === 0
   const maxSaving = Math.max(1, ...items.map((i) => i.saving))
@@ -56,6 +56,15 @@ export function Plan({ input, rules, result, onAdd }: { input: TaxInput; rules: 
           </button>
         </section>
       )}
+
+      <button type="button" onClick={onMarket} className="card flex items-center gap-3 rounded-3xl p-4 text-left">
+        <IconTile name="saving" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-lg font-semibold">ตลาดหุ้นโลก</span>
+          <span className="block text-sm text-muted">ดูภาพรวม SET, S&P 500, Nikkei, ทองคำ และค่าเงินบาท พร้อมเรื่องภาษีที่เกี่ยวกับหุ้น</span>
+        </span>
+        <span aria-hidden className="text-xl text-muted">→</span>
+      </button>
 
       <section className="card rounded-3xl p-4 text-[15px]">
         <div className="mb-2 flex items-center gap-3">

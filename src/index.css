@@ -212,6 +212,22 @@ button:not(:disabled):active {
   transform-origin: left center;
   animation: grow-x 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+@keyframes flash-up {
+  from {
+    background-color: var(--refund-soft);
+  }
+}
+@keyframes flash-down {
+  from {
+    background-color: var(--due-soft);
+  }
+}
+.flash-up {
+  animation: flash-up 1s ease-out;
+}
+.flash-down {
+  animation: flash-down 1s ease-out;
+}
 .anim-screen {
   animation: screen-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }

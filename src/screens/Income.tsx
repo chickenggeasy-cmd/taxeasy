@@ -1,4 +1,5 @@
-import { Disclosure, MoneyField, PageHero, Section, Toggle } from '../components/ui'
+import { Disclosure, MoneyField, PageHero, Section, Segmented, Toggle } from '../components/ui'
+import { compareDividendChoice } from '../engine/plan'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
 
@@ -9,6 +10,9 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
   const ex = rules.expenses
   const expenseOf = (id: string) => result.incomes.find((l) => l.id === id)?.expense ?? 0
   const sumRent = Object.values(inc.rent).reduce((a, b) => a + b, 0)
+  const inv = inc.investment
+  const dividendChoice = compareDividendChoice(input, rules)
+  const balanceText = (b: number) => (b < 0 ? `ได้คืน ${fmt(-b)}` : b > 0 ? `จ่ายเพิ่ม ${fmt(b)}` : 'ไม่ต้องจ่ายเพิ่ม')
 
   return (
     <div className="anim-stagger flex flex-col gap-4">
@@ -121,9 +125,78 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
           )
         })}
 
-        <p className="text-sm text-muted">
-          ดอกเบี้ยและเงินปันผล 40(4) ส่วนใหญ่ถูกหักภาษี ณ ที่จ่ายแล้วและเลือกไม่นำมารวมได้ เวอร์ชันนี้ยังไม่รวมในการคำนวณ
-        </p>
+        <Disclosure
+          icon="saving"
+          title="เงินปันผล / ดอกเบี้ย 40(4)"
+          summary={inv.dividends + inv.fundDividends + inv.interest ? `${fmt(inv.dividends + inv.fundDividends + inv.interest)} บาท${inv.includeDividends || inv.includeInterest ? ' · นำมารวมคำนวณ' : ''}` : 'ไม่มี'}
+        >
+          <MoneyField
+            id="dividends"
+            label="เงินปันผลจากหุ้นไทย (ก่อนหักภาษี)"
+            value={inv.dividends}
+            onChange={(v) => update((d) => void (d.income.investment.dividends = v))}
+            hint="ดูยอดในหนังสือรับรองการจ่ายเงินปันผล หรือในแอปโบรกเกอร์"
+          />
+          {inv.dividends > 0 && (
+            <div className="flex flex-col gap-1">
+              <span className="text-[15px] font-semibold">อัตราภาษีนิติบุคคลของบริษัทที่จ่าย</span>
+              <Segmented
+                label="อัตราภาษีนิติบุคคล"
+                value={String(inv.dividendCorpRate)}
+                options={[
+                  { value: '0.2', label: '20% (ทั่วไป)' },
+                  { value: '0.1', label: '10%' },
+                  { value: '0', label: 'ยกเว้น/BOI' },
+                ]}
+                onChange={(v) => update((d) => void (d.income.investment.dividendCorpRate = Number(v)))}
+              />
+              <p className="text-sm text-muted">ใช้คิดเครดิตภาษีเงินปันผล ดูได้ในหนังสือรับรอง บริษัทส่วนใหญ่เสียภาษี 20%</p>
+            </div>
+          )}
+          <MoneyField
+            id="fund-dividends"
+            label="เงินปันผลจากกองทุนรวม"
+            value={inv.fundDividends}
+            onChange={(v) => update((d) => void (d.income.investment.fundDividends = v))}
+            hint="ถูกหักภาษี 10% เหมือนกัน แต่ไม่มีเครดิตภาษีเงินปันผล"
+          />
+          {inv.dividends + inv.fundDividends > 0 && (
+            <>
+              <Toggle
+                label="นำเงินปันผลมารวมคำนวณภาษี"
+                hint="ถ้าไม่เปิด ภาษี 10% ที่ถูกหักไว้ถือว่าจบ ถ้าเปิด ต้องนำเงินปันผลทั้งปีมารวม"
+                checked={inv.includeDividends}
+                onChange={(v) => update((d) => void (d.income.investment.includeDividends = v))}
+              />
+              {dividendChoice && (
+                <p className={`rounded-xl px-3 py-2 text-sm ${dividendChoice.better === 'include' ? 'bg-refund-soft text-refund' : 'bg-accent-soft text-accent'}`}>
+                  นำมารวม: {balanceText(dividendChoice.include)} · ไม่นำมารวม: {balanceText(dividendChoice.exclude)}
+                  <b className="block">
+                    แนะนำ{dividendChoice.better === 'include' ? 'ให้นำมารวมคำนวณ' : 'ไม่ต้องนำมารวม'} (ต่างกัน {fmt(Math.abs(dividendChoice.include - dividendChoice.exclude))} บาท)
+                  </b>
+                </p>
+              )}
+            </>
+          )}
+          <MoneyField
+            id="interest"
+            label="ดอกเบี้ยเงินฝากที่ถูกหักภาษี 15%"
+            value={inv.interest}
+            onChange={(v) => update((d) => void (d.income.investment.interest = v))}
+            hint="ดอกเบี้ยออมทรัพย์รวมไม่เกิน 20,000 บาทต่อปีได้รับยกเว้น ไม่ต้องกรอก"
+          />
+          {inv.interest > 0 && (
+            <Toggle
+              label="นำดอกเบี้ยมารวมคำนวณภาษี"
+              hint="คุ้มเมื่อฐานภาษีของคุณต่ำกว่า 15%"
+              checked={inv.includeInterest}
+              onChange={(v) => update((d) => void (d.income.investment.includeInterest = v))}
+            />
+          )}
+          <p className="rounded-xl bg-paper px-3 py-2 text-sm text-muted">
+            กำไรจากการขายหุ้นไทยในตลาดหลักทรัพย์ได้รับยกเว้นภาษี ไม่ต้องกรอก ส่วนเงินได้จากหุ้นต่างประเทศที่นำเข้าไทยตั้งแต่ปี 2567 ต้องเสียภาษี แอปยังไม่คำนวณส่วนนี้
+          </p>
+        </Disclosure>
       </Section>
 
       <Section icon="receipt" title="ภาษีที่จ่ายล่วงหน้า">

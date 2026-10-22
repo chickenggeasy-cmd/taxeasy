@@ -11,6 +11,7 @@ export function emptyInput(): TaxInput {
       professional: { medical: 0, other: 0 },
       contract: { amount: 0, useActual: false, actualExpense: 0 },
       business: { amount: 0, useActual: false, actualExpense: 0 },
+      investment: { dividends: 0, dividendCorpRate: 0.2, fundDividends: 0, includeDividends: false, interest: 0, includeInterest: false },
     },
     deductions: {
       children: [],
@@ -54,6 +55,7 @@ export function mergeInput(saved: Partial<TaxInput> | null | undefined): TaxInpu
       professional: { ...base.income.professional, ...saved.income?.professional },
       contract: { ...base.income.contract, ...saved.income?.contract },
       business: { ...base.income.business, ...saved.income?.business },
+      investment: { ...base.income.investment, ...saved.income?.investment },
     },
     deductions: { ...base.deductions, ...saved.deductions },
     measures: { ...saved.measures },
