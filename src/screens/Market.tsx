@@ -124,7 +124,7 @@ export function Market({ onBack }: { onBack: () => void }) {
           </span>
           อัปเดตอัตโนมัติทุก 30 วินาที
         </span>
-        <span className="num text-muted">{checkedAt ? `ล่าสุด ${checkedAt.toLocaleTimeString('th-TH')}` : 'กำลังโหลด…'}</span>
+        <span className="num text-muted">{checkedAt ? `ล่าสุด ${checkedAt.toLocaleTimeString('th-TH')}` : loading ? 'กำลังโหลด…' : 'โหลดไม่สำเร็จ'}</span>
       </div>
 
       <Segmented label="ช่วงเวลา" value={range} options={(Object.keys(RANGE_LABEL) as MarketRange[]).map((r) => ({ value: r, label: RANGE_LABEL[r] }))} onChange={setRange} />

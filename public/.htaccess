@@ -1,0 +1,11 @@
+# ภาษีง่ายๆ: ให้เบราว์เซอร์ถามเซิร์ฟเวอร์ใหม่ทุกครั้งสำหรับหน้าแอป (กันหน้าขาวหลังอัปเดต)
+# ส่วนไฟล์ใน assets/ มีรหัสในชื่อไฟล์ที่เปลี่ยนทุกครั้งที่ build จึงจำไว้ได้นาน
+<IfModule mod_headers.c>
+  <FilesMatch "(\.html|sw\.js|manifest\.webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <If "%{REQUEST_URI} =~ m#/assets/#">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+</IfModule>
+DirectoryIndex index.html index.php

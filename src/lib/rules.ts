@@ -1,6 +1,7 @@
 import rules2568 from '../../rules/2568.json'
 import rules2569 from '../../rules/2569.json'
 import type { TaxRules } from '../engine/types'
+import { readApiJson } from './server'
 import { readJSON, writeJSON } from './storage'
 
 /** กฎที่ติดมากับแอป ใช้ได้แม้ออฟไลน์หรือยังไม่ได้ต่อหลังบ้าน */
@@ -58,14 +59,14 @@ export async function fetchRules(current: RulesState): Promise<RulesState> {
   if (__PREVIEW__) return { ...current, error: 'ลิงก์ทดลองนี้ไม่ได้เชื่อมหลังบ้าน ใช้กฎที่ติดมากับแอป' }
   try {
     const res = await fetch('./api/rules.php', { cache: 'no-store' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = (await res.json()) as { ok: boolean; rules: unknown[] }
+    const data = await readApiJson<{ ok: boolean; rules: unknown[] }>(res)
+    if (!res.ok && !data.ok) throw new Error(`HTTP ${res.status}`)
     const rules = (data.rules ?? []).filter(isRules)
     if (!data.ok || rules.length === 0) throw new Error('ไม่มีข้อมูลกฎภาษี')
     const checkedAt = new Date().toISOString()
     writeJSON(CACHE_KEY, { rules, checkedAt })
     return { byYear: merge(BUNDLED, rules), source: 'online', checkedAt, error: null }
   } catch (e) {
-    return { ...current, error: `เชื่อมต่อหลังบ้านไม่ได้ (${(e as Error).message}) ใช้กฎที่บันทึกไว้ในเครื่องแทน` }
+    return { ...current, error: `เชื่อมต่อหลังบ้านไม่ได้: ${(e as Error).message} · ตอนนี้ใช้กฎที่บันทึกไว้ในเครื่องแทน` }
   }
 }

@@ -1,22 +1,23 @@
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from './format'
+import { NO_PHP_MESSAGE, readApiJson } from './server'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
 }
 
-export type AssistantStatus = 'checking' | 'ready' | 'not_configured' | 'php_version' | 'offline'
+export type AssistantStatus = 'checking' | 'ready' | 'not_configured' | 'php_version' | 'no_php' | 'offline'
 
 export async function checkAssistant(): Promise<AssistantStatus> {
   if (__PREVIEW__) return 'offline'
   try {
     const res = await fetch('./api/chat.php', { cache: 'no-store' })
-    const data = (await res.json()) as { enabled?: boolean; reason?: string | null }
+    const data = await readApiJson<{ enabled?: boolean; reason?: string | null }>(res)
     if (data.reason === 'php_version') return 'php_version'
     return data.enabled ? 'ready' : 'not_configured'
-  } catch {
-    return 'offline'
+  } catch (e) {
+    return (e as Error).message === NO_PHP_MESSAGE ? 'no_php' : 'offline'
   }
 }
 

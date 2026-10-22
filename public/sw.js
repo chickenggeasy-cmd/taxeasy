@@ -2,7 +2,7 @@
 // - หน้าเว็บ (index.html): ดึงจากเซิร์ฟเวอร์ก่อน ได้เวอร์ชันใหม่ทันทีหลังอัปเดต ถ้าออฟไลน์ใช้ของในแคช
 // - ไฟล์อื่น (js/css/ฟอนต์/ภาพ): ใช้ของในแคชก่อน แล้วอัปเดตเบื้องหลัง (ชื่อไฟล์ js/css เปลี่ยนทุกครั้งที่ build)
 // - api/: ดึงจากเซิร์ฟเวอร์ก่อนเสมอ (กฎภาษีต้องสดใหม่) ถ้าออฟไลน์แอปจะใช้กฎที่บันทึกไว้เอง
-const CACHE = 'taxeasy-v2'
+const CACHE = 'taxeasy-v3'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', './index.html', './manifest.webmanifest'])))
@@ -23,7 +23,8 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
+      // cache: 'no-cache' = ข้ามความจำของเบราว์เซอร์ ถามเซิร์ฟเวอร์ทุกครั้ง
+      fetch(event.request.url, { cache: 'no-cache', credentials: 'same-origin' })
         .then((res) => {
           if (res.ok) {
             const copy = res.clone()

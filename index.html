@@ -13,6 +13,32 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // กันหน้าขาว: ถ้าแอปไม่ขึ้นภายใน 6 วินาที (มักเกิดจากไฟล์เก่าที่ service worker เก็บไว้)
+      // ให้ล้างแคชและ service worker แล้วโหลดใหม่เองหนึ่งครั้ง
+      setTimeout(function () {
+        var root = document.getElementById('root')
+        if (root && root.childElementCount > 0) return
+        try {
+          if (sessionStorage.getItem('taxeasy:recovered')) return
+          sessionStorage.setItem('taxeasy:recovered', '1')
+        } catch (e) {
+          return
+        }
+        var jobs = []
+        if ('serviceWorker' in navigator) {
+          jobs.push(navigator.serviceWorker.getRegistrations().then(function (rs) {
+            return Promise.all(rs.map(function (r) { return r.unregister() }))
+          }))
+        }
+        if (window.caches) {
+          jobs.push(caches.keys().then(function (ks) {
+            return Promise.all(ks.map(function (k) { return caches.delete(k) }))
+          }))
+        }
+        Promise.all(jobs).finally(function () { location.reload() })
+      }, 6000)
+    </script>
     <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
