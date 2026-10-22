@@ -20,7 +20,7 @@
   --refund-soft: #e1f4ea;
   --due: #b04a14;
   --due-soft: #fbece2;
-  /* กรอบรองภาพตกแต่ง: สีอ่อนทั้งสองธีม เพื่อให้ภาพพื้นขาวกลืนไปกับกรอบ */
+  /* กรอบรองภาพตกแต่ง */
   --art: #e9edfd;
   --art-white: #ffffff;
   --font-display: 'Bai Jamjuree', 'Leelawadee UI', 'Thonburi', sans-serif;
@@ -40,6 +40,7 @@
     --refund-soft: #0f2c21;
     --due: #ff9d61;
     --due-soft: #33200f;
+    --art: #1d2552;
     color-scheme: dark;
   }
 }
@@ -56,7 +57,49 @@
   --refund-soft: #0f2c21;
   --due: #ff9d61;
   --due-soft: #33200f;
+  --art: #1d2552;
   color-scheme: dark;
+}
+
+/* โหมดสำหรับคนตาบอดสี: เปลี่ยนคู่สี "ได้คืน / จ่ายเพิ่ม" ให้แยกออกจากกันได้ชัด
+   rg = ตาบอดสีแดง-เขียว (พบบ่อยที่สุด) ใช้ฟ้า-ส้ม / by = ตาบอดสีน้ำเงิน-เหลือง ใช้เขียวหัวเป็ด-ชมพูเข้ม */
+:root[data-cvd='rg'] {
+  --refund: #0369a1;
+  --refund-soft: #e0f2fe;
+  --due: #b45309;
+  --due-soft: #fef3c7;
+}
+:root[data-cvd='by'] {
+  --refund: #0f766e;
+  --refund-soft: #ccfbf1;
+  --due: #be123c;
+  --due-soft: #ffe4e6;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-cvd='rg']:not([data-theme='light']) {
+    --refund: #7dd3fc;
+    --refund-soft: #0c2a3d;
+    --due: #fcd34d;
+    --due-soft: #3a2a08;
+  }
+  :root[data-cvd='by']:not([data-theme='light']) {
+    --refund: #5eead4;
+    --refund-soft: #0b2b28;
+    --due: #fda4af;
+    --due-soft: #3b1219;
+  }
+}
+:root[data-cvd='rg'][data-theme='dark'] {
+  --refund: #7dd3fc;
+  --refund-soft: #0c2a3d;
+  --due: #fcd34d;
+  --due-soft: #3a2a08;
+}
+:root[data-cvd='by'][data-theme='dark'] {
+  --refund: #5eead4;
+  --refund-soft: #0b2b28;
+  --due: #fda4af;
+  --due-soft: #3b1219;
 }
 
 @theme inline {
@@ -89,6 +132,64 @@ body {
 }
 body {
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+/* ตัดดีเลย์ตอนแตะบนมือถือ และให้ปุ่มยุบลงนิดหนึ่งตอนกด */
+button,
+a,
+input,
+textarea,
+label {
+  touch-action: manipulation;
+}
+button {
+  transition:
+    transform 120ms ease,
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+/* ภาพเคลื่อนไหว */
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes panel-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.anim-screen {
+  animation: screen-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.anim-fade {
+  animation: fade-in 200ms ease-out;
+}
+.anim-sheet {
+  animation: sheet-in 320ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  overscroll-behavior: contain;
+}
+@media (min-width: 768px) {
+  .anim-sheet {
+    animation-name: panel-in;
+  }
 }
 h1,
 h2,

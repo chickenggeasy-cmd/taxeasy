@@ -12,6 +12,7 @@ import { Plan } from './screens/Plan'
 import { Summary, Verdict } from './screens/Summary'
 import { Art } from './components/Art'
 import { Assistant } from './components/Assistant'
+import { DisplaySettings } from './components/DisplaySettings'
 
 type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more'
 
@@ -20,7 +21,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'income', label: 'รายได้', icon: 'M3 7h18v10H3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5M6 10v4m12-4v4' },
   { id: 'deductions', label: 'ลดหย่อน', icon: 'M6 18L18 6M8 8.5a1.5 1.5 0 100-.01M16 16.5a1.5 1.5 0 100-.01' },
   { id: 'plan', label: 'วางแผน', icon: 'M4 18l5-5 4 3 7-8m0 0h-5m5 0v5' },
-  { id: 'more', label: 'ตั้งค่า', icon: 'M5 12h.01M12 12h.01M19 12h.01' },
+  { id: 'more', label: 'เพิ่มเติม', icon: 'M5 12h.01M12 12h.01M19 12h.01' },
 ]
 
 const inputKey = (year: number) => `taxeasy:input:${year}`
@@ -142,9 +143,7 @@ export default function App() {
       <header className="sticky top-[env(safe-area-inset-top,0px)] z-20 border-b border-line bg-paper/95 backdrop-blur before:fixed before:inset-x-0 before:top-0 before:h-[env(safe-area-inset-top,0px)] before:bg-paper">
         <div className="gutter mx-auto flex max-w-6xl items-center justify-between gap-3 py-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-accent font-display text-lg font-semibold text-accent-ink">
-              ภ
-            </span>
+            <img src="./icons/icon.svg" alt="" width="36" height="36" className="h-9 w-9 shrink-0 rounded-xl shadow-sm" />
             <div className="min-w-0 leading-tight">
               <p className="font-display text-lg font-semibold">ภาษีง่ายๆ</p>
               <p className="text-xs text-muted md:hidden">{title}</p>
@@ -172,11 +171,14 @@ export default function App() {
       <div className={`gutter mx-auto grid gap-6 pt-4 pb-40 md:pb-12 ${tab === 'summary' ? 'max-w-2xl' : 'max-w-6xl md:grid-cols-[minmax(0,1fr)_360px]'}`}>
         <main className="flex min-w-0 flex-col gap-4">
           {state.example && (
-            <div className="overflow-hidden rounded-2xl border border-dashed border-accent">
-              <Art name="hero" alt="" className="block h-auto max-h-56 w-full bg-art object-contain" />
+            <div className="overflow-hidden rounded-3xl border border-line bg-surface">
+              <div className="bg-gradient-to-b from-accent-soft to-surface px-4 pt-4">
+                <Art name="hero" alt="" className="mx-auto block h-auto max-h-60 w-full max-w-xl object-contain" />
+              </div>
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <p className="min-w-0 text-[15px]">
-                  <b>ตัวเลขนี้เป็นข้อมูลตัวอย่าง</b>
+                  <span className="mb-1 inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">ข้อมูลตัวอย่าง</span>
+                  <b className="block font-display text-lg">ลองดูว่าภาษีง่ายๆ คำนวณให้คุณยังไง</b>
                   <span className="block text-sm text-muted">มนุษย์เงินเดือน 60,000 บาท/เดือน มีลูก 1 คน ดูแลแม่ 1 คน</span>
                 </p>
                 <button type="button" onClick={startFresh} className="shrink-0 rounded-xl bg-accent px-4 py-2 font-semibold text-accent-ink">
@@ -185,7 +187,9 @@ export default function App() {
               </div>
             </div>
           )}
-          {screen}
+          <div key={`${tab}-${year}`} className="anim-screen flex flex-col gap-4">
+            {screen}
+          </div>
         </main>
         {tab !== 'summary' && (
           <aside className="hidden md:block">
@@ -199,6 +203,7 @@ export default function App() {
         )}
       </div>
 
+      <DisplaySettings raised={tab !== 'summary'} />
       <Assistant input={state.input} result={result} rules={rules} raised={tab !== 'summary'} />
 
       {/* แถบล่างบนมือถือ: ผลภาษีแบบสด + เมนู */}
@@ -226,9 +231,11 @@ export default function App() {
               type="button"
               onClick={() => go(t.id)}
               aria-current={tab === t.id ? 'page' : undefined}
-              className={`flex flex-col items-center gap-0.5 pt-2 pb-1.5 text-xs font-semibold ${tab === t.id ? 'text-accent' : 'text-muted'}`}
+              className={`flex flex-col items-center gap-1 pt-2 pb-2 text-xs font-semibold ${tab === t.id ? 'text-accent' : 'text-muted'}`}
             >
-              <Icon d={t.icon} />
+              <span className={`grid h-8 w-14 place-items-center rounded-full transition-colors ${tab === t.id ? 'bg-accent-soft' : ''}`}>
+                <Icon d={t.icon} />
+              </span>
               {t.label}
             </button>
           ))}

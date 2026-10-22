@@ -7,11 +7,11 @@ import { Art } from './Art'
 const CONSENT_KEY = 'taxeasy:ai-consent'
 const MAX_TURNS = 10
 
-/** หน้าตาน้องภาษี: ใช้ images/assistant.png ถ้ามี ไม่มีก็ใช้ภาพวาดนี้แทน */
+/** หน้าตาน้องภาษี: ใช้ images/assistant.webp ถ้ามี ไม่มีก็ใช้ภาพวาดนี้แทน */
 export function Mascot({ size = 36 }: { size?: number }) {
   return (
     <span className="inline-grid shrink-0 place-items-center overflow-hidden rounded-full bg-art-white" style={{ width: size, height: size }}>
-      <Art name="assistant" className="h-full w-full scale-[1.15] object-cover" fallback={<MascotSvg size={size} />} />
+      <Art name="assistant" className="h-full w-full object-cover" fallback={<MascotSvg size={size} />} />
     </span>
   )
 }
@@ -100,8 +100,8 @@ export function Assistant({ input, result, rules, raised }: { input: TaxInput; r
 
       {open && (
         <div className="fixed inset-0 z-40 flex items-end justify-end md:items-stretch" role="dialog" aria-modal="true" aria-label="น้องภาษี AI ผู้ช่วย">
-          <button type="button" aria-label="ปิด" className="absolute inset-0 bg-ink/30" onClick={() => setOpen(false)} />
-          <div className="relative flex h-[88%] w-full flex-col rounded-t-3xl bg-surface shadow-2xl md:h-full md:w-[420px] md:rounded-none md:border-l md:border-line">
+          <button type="button" aria-label="ปิด" className="anim-fade absolute inset-0 bg-ink/30" onClick={() => setOpen(false)} />
+          <div className="anim-sheet relative flex h-[88%] w-full flex-col rounded-t-3xl bg-surface shadow-2xl md:h-full md:w-[420px] md:rounded-none md:border-l md:border-line">
             <header className="flex items-center gap-3 border-b border-line px-4 py-3">
               <Mascot size={40} />
               <div className="min-w-0 flex-1 leading-tight">

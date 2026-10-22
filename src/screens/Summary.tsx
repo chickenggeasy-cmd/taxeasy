@@ -2,6 +2,7 @@ import { Art } from '../components/Art'
 import { Staircase } from '../components/Staircase'
 import type { TaxResult, TaxRules } from '../engine/types'
 import { daysUntil, fmt, pct, thaiDate } from '../lib/format'
+import { useAnimatedNumber } from '../lib/useAnimatedNumber'
 
 function Row({ label, value, strong, sign }: { label: string; value: number; strong?: boolean; sign?: '−' | '=' }) {
   return (
@@ -18,21 +19,23 @@ function Row({ label, value, strong, sign }: { label: string; value: number; str
 export function Verdict({ result }: { result: TaxResult }) {
   const refund = result.balance < 0
   const zero = Math.abs(result.balance) < 0.005
+  const amount = useAnimatedNumber(Math.abs(result.balance))
   const tone = zero ? 'bg-accent-soft text-accent' : refund ? 'bg-refund-soft text-refund' : 'bg-due-soft text-due'
   return (
-    <div className={`flex items-center gap-3 rounded-2xl p-5 ${tone}`}>
+    <div className={`flex items-center gap-3 rounded-3xl p-5 transition-colors duration-300 ${tone}`}>
       <div className="min-w-0 flex-1">
-      <p className="text-sm font-semibold">{zero ? 'ไม่ต้องจ่ายเพิ่ม และไม่มีเงินคืน' : refund ? 'คุณจะได้เงินภาษีคืน' : 'คุณต้องจ่ายภาษีเพิ่ม'}</p>
-      <p className="num font-display text-[2.6rem] leading-tight font-semibold">
-        ฿{fmt(Math.abs(result.balance))}
-      </p>
-      <p className="num text-sm text-ink">
-        ภาษีทั้งปี {fmt(result.tax)} บาท · จ่ายไปแล้ว {fmt(result.credits)} บาท
-      </p>
+        <p className="flex items-center gap-1.5 text-sm font-semibold">
+          <span aria-hidden className="text-xs">{zero ? '●' : refund ? '▲' : '▼'}</span>
+          {zero ? 'ไม่ต้องจ่ายเพิ่ม และไม่มีเงินคืน' : refund ? 'คุณจะได้เงินภาษีคืน' : 'คุณต้องจ่ายภาษีเพิ่ม'}
+        </p>
+        <p className="num font-display text-[2.6rem] leading-tight font-semibold tracking-tight">฿{fmt(Math.round(amount))}</p>
+        <p className="num text-sm text-ink/80">
+          ภาษีทั้งปี {fmt(result.tax)} บาท · จ่ายไปแล้ว {fmt(result.credits)} บาท
+        </p>
       </div>
       {refund && !zero && (
-        <span className="hidden shrink-0 overflow-hidden rounded-2xl bg-art min-[360px]:block">
-          <Art name="refund" alt="" className="block h-24 w-24 object-contain" />
+        <span className="hidden shrink-0 min-[360px]:block">
+          <Art name="refund" alt="" className="block h-24 w-24 object-contain drop-shadow-sm" />
         </span>
       )}
     </div>
@@ -44,9 +47,7 @@ export function Summary({ result, rules, compact = false, onStart }: { result: T
   if (result.totalIncome === 0 && onStart) {
     return (
       <section className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-6 text-center">
-        <span className="overflow-hidden rounded-2xl bg-art">
-          <Art name="empty" alt="" className="block h-40 w-40 object-contain" />
-        </span>
+        <Art name="empty" alt="" className="block h-44 w-44 object-contain" />
         <h2 className="text-xl font-semibold">ยังไม่มีรายได้ให้คำนวณ</h2>
         <p className="max-w-sm text-[15px] text-muted">เริ่มจากกรอกเงินเดือนทั้งปีและภาษีที่ถูกหักไว้ตามหนังสือรับรอง 50 ทวิ ใช้เวลาไม่ถึง 2 นาที</p>
         <button type="button" onClick={onStart} className="rounded-xl bg-accent px-5 py-3 font-semibold text-accent-ink">

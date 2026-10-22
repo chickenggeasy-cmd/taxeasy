@@ -30,7 +30,7 @@ export function Staircase({ result }: { result: TaxResult }) {
                   {fmt(l.from)} – {l.to === null ? 'ขึ้นไป' : fmt(l.to)}
                 </span>
                 <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-paper">
-                  <span className="block h-full rounded-full bg-accent" style={{ width: `${fill * 100}%` }} />
+                  <span className="block h-full rounded-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${fill * 100}%` }} />
                 </span>
               </span>
               <span className={`num text-right text-sm ${l.tax > 0 ? 'font-semibold' : 'text-muted'}`}>{fmt(l.tax)}</span>
