@@ -1,13 +1,31 @@
-import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { fmt } from '../lib/format'
+import { Art, type ArtName } from './Art'
+import { IconTile, type IconName } from './icons'
 
-export function Section({ title, subtitle, children, action }: { title: string; subtitle?: string; children: ReactNode; action?: ReactNode }) {
+/** หัวหน้าแต่ละแท็บ: ชื่อหน้า + ภาพประกอบ (ถ้ามีไฟล์ใน images/) */
+export function PageHero({ title, subtitle, art }: { title: string; subtitle?: string; art: ArtName }) {
   return (
-    <section className="rounded-2xl border border-line bg-surface">
-      <header className="flex items-start justify-between gap-3 px-4 pt-4">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+    <div className="flex items-center gap-4 px-1 pt-1">
+      <div className="min-w-0 flex-1">
+        <h1 className="font-display text-[1.75rem] leading-tight font-semibold tracking-tight">{title}</h1>
+        {subtitle && <p className="num mt-1 text-[15px] text-muted">{subtitle}</p>}
+      </div>
+      <Art name={art} alt="" className="h-24 w-24 shrink-0 object-contain sm:h-28 sm:w-28" />
+    </div>
+  )
+}
+
+export function Section({ title, subtitle, children, action, icon }: { title: string; subtitle?: string; children: ReactNode; action?: ReactNode; icon?: IconName }) {
+  return (
+    <section className="card rounded-3xl">
+      <header className="flex items-center justify-between gap-3 px-4 pt-4">
+        <div className="flex min-w-0 items-center gap-3">
+          {icon && <IconTile name={icon} />}
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            {subtitle && <p className="text-sm text-muted">{subtitle}</p>}
+          </div>
         </div>
         {action}
       </header>
@@ -151,20 +169,33 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
   )
 }
 
-export function Disclosure({ title, summary, children, defaultOpen = false }: { title: string; summary?: string; children: ReactNode; defaultOpen?: boolean }) {
+export function Disclosure({ title, summary, children, defaultOpen = false, icon }: { title: string; summary?: string; children: ReactNode; defaultOpen?: boolean; icon?: IconName }) {
   const [open, setOpen] = useState(defaultOpen)
+  const body = useRef<HTMLDivElement>(null)
+  // ตอนพับ: ห้ามโฟกัส/กดช่องที่ซ่อนอยู่
+  useEffect(() => {
+    if (body.current) body.current.inert = !open
+  }, [open])
   return (
-    <div className="rounded-xl border border-line">
-      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
-        <span className="min-w-0">
-          <span className="block font-semibold">{title}</span>
-          {summary && <span className="num block text-sm text-muted">{summary}</span>}
+    <div className={`rounded-2xl border transition-colors duration-200 ${open ? 'border-accent/40 bg-paper/60' : 'border-line'}`}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left active:scale-100">
+        <span className="flex min-w-0 items-center gap-3">
+          {icon && <IconTile name={icon} size={36} />}
+          <span className="min-w-0">
+            <span className="block font-semibold">{title}</span>
+            {summary && <span className="num block text-sm text-muted">{summary}</span>}
+          </span>
         </span>
-        <span aria-hidden className={`text-muted transition-transform ${open ? 'rotate-180' : ''}`}>
+        <span aria-hidden className={`text-muted transition-transform duration-300 ${open ? 'rotate-180' : ''}`}>
           ▾
         </span>
       </button>
-      {open && <div className="flex flex-col gap-4 border-t border-line p-4">{children}</div>}
+      {/* กาง/พับแบบนุ่มด้วย grid-template-rows */}
+      <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`} ref={body}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="flex flex-col gap-4 border-t border-line p-4">{children}</div>
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { Disclosure, MoneyField, Section, Segmented, Stepper, Toggle } from '../components/ui'
+import { Disclosure, MoneyField, PageHero, Section, Segmented, Stepper, Toggle } from '../components/ui'
 import type { DeductionKey, TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
 
@@ -27,8 +27,9 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
   const thisYear = rules.taxYear
 
   return (
-    <div className="flex flex-col gap-4">
-      <Section title="เกี่ยวกับคุณ" subtitle="ตอบตามจริง แอปจะเลือกสิทธิที่คุณได้ให้เอง">
+    <div className="anim-stagger flex flex-col gap-4">
+      <PageHero art="deductions" title="ค่าลดหย่อน" subtitle={`ใช้สิทธิแล้ว ${fmt(result.totalDeductions)} บาท · แอปตรวจเพดานให้ทุกช่อง`} />
+      <Section icon="profile" title="เกี่ยวกับคุณ" subtitle="ตอบตามจริง แอปจะเลือกสิทธิที่คุณได้ให้เอง">
         <Segmented
           label="สถานะสมรส"
           value={p.married ? 'married' : 'single'}
@@ -54,7 +55,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
         />
       </Section>
 
-      <Section title="ครอบครัว" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('children', 'parents', 'disabledCare', 'prenatal'))} บาท`}>
+      <Section icon="family" title="ครอบครัว" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('children', 'parents', 'disabledCare', 'prenatal'))} บาท`}>
         <div className="flex flex-col gap-3">
           <Stepper
             label="บุตร"
@@ -101,7 +102,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
         {money('prenatal', 'ค่าฝากครรภ์และคลอดบุตร', r.prenatal, 'ต่อการตั้งครรภ์แต่ละครั้ง')}
       </Section>
 
-      <Section title="ประกันและประกันสังคม" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('socialSecurity', 'lifeInsurance', 'healthInsurance', 'spouseLifeInsurance', 'parentHealthInsurance'))} บาท`}>
+      <Section icon="shield" title="ประกันและประกันสังคม" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('socialSecurity', 'lifeInsurance', 'healthInsurance', 'spouseLifeInsurance', 'parentHealthInsurance'))} บาท`}>
         {money('socialSecurity', 'เงินสมทบประกันสังคม', r.socialSecurity, 'ดูใน 50 ทวิ')}
         {money('lifeInsurance', 'เบี้ยประกันชีวิต', r.lifeInsurance, 'กรมธรรม์ 10 ปีขึ้นไป')}
         {money('healthInsurance', 'เบี้ยประกันสุขภาพตนเอง', r.healthInsurance, `รวมกับประกันชีวิตไม่เกิน ${fmt(r.lifeHealthCombined)}`)}
@@ -109,7 +110,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
         {money('parentHealthInsurance', 'เบี้ยประกันสุขภาพบิดามารดา', r.parentHealthInsurance)}
       </Section>
 
-      <Section title="ออมเพื่อเกษียณและกองทุน" subtitle={`กลุ่มเกษียณรวมกันไม่เกิน ${fmt(r.retirementCombined)} บาท`}>
+      <Section icon="saving" title="ออมเพื่อเกษียณและกองทุน" subtitle={`กลุ่มเกษียณรวมกันไม่เกิน ${fmt(r.retirementCombined)} บาท`}>
         {money('pensionInsurance', 'เบี้ยประกันชีวิตแบบบำนาญ', r.pensionInsurance.max, `${pct(r.pensionInsurance.rate)} ของเงินได้`)}
         {money('pvd', 'กองทุนสำรองเลี้ยงชีพ (PVD) ส่วนที่คุณจ่าย', r.pvd.max, `${pct(r.pvd.rate)} ของค่าจ้าง`)}
         {money('gpf', 'กบข. / กองทุนสงเคราะห์ครูเอกชน', r.gpf.max)}
@@ -120,14 +121,14 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
         {r.thaiEsgxLtf > 0 && money('thaiEsgxLtf', 'ThaiESGX ส่วนที่สับเปลี่ยนจาก LTF', r.thaiEsgxLtf)}
       </Section>
 
-      <Section title="บ้านและอื่น ๆ">
+      <Section icon="home" title="บ้านและอื่น ๆ">
         {money('homeLoanInterest', 'ดอกเบี้ยเงินกู้ซื้อที่อยู่อาศัย', r.homeLoanInterest)}
         {money('socialEnterprise', 'เงินลงทุนในวิสาหกิจเพื่อสังคม', r.socialEnterprise)}
         {money('politicalDonation', 'บริจาคพรรคการเมือง', r.politicalDonation)}
       </Section>
 
       {rules.measures.length > 0 && (
-        <Section title={`มาตรการพิเศษปี ${rules.taxYear}`} subtitle="มาตรการที่รัฐประกาศเฉพาะปีนี้">
+        <Section icon="sparkle" title={`มาตรการพิเศษปี ${rules.taxYear}`} subtitle="มาตรการที่รัฐประกาศเฉพาะปีนี้">
           {rules.measures.map((m) => {
             const allowed = line(`measure:${m.id}`)?.allowed ?? 0
             return (
@@ -154,7 +155,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
         </Section>
       )}
 
-      <Section title="เงินบริจาค" subtitle={`รวมแล้วไม่เกิน ${pct(r.donationCapRate)} ของเงินได้หลังหักลดหย่อน`}>
+      <Section icon="heart" title="เงินบริจาค" subtitle={`รวมแล้วไม่เกิน ${pct(r.donationCapRate)} ของเงินได้หลังหักลดหย่อน`}>
         {money('donationEducation', 'บริจาคการศึกษา กีฬา โรงพยาบาลรัฐ', undefined, 'หักได้ 2 เท่า ต้องผ่านระบบ e-Donation')}
         {money('donationGeneral', 'บริจาคทั่วไป (มูลนิธิ วัด ฯลฯ)')}
       </Section>

@@ -1,4 +1,4 @@
-import { Disclosure, MoneyField, Section, Toggle } from '../components/ui'
+import { Disclosure, MoneyField, PageHero, Section, Toggle } from '../components/ui'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
 
@@ -11,8 +11,9 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
   const sumRent = Object.values(inc.rent).reduce((a, b) => a + b, 0)
 
   return (
-    <div className="flex flex-col gap-4">
-      <Section title="เงินเดือน" subtitle="ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้">
+    <div className="anim-stagger flex flex-col gap-4">
+      <PageHero art="income" title="รายได้ทั้งปี" subtitle="กรอกเฉพาะประเภทที่คุณมี แอปหักค่าใช้จ่ายตามกฎหมายให้เอง" />
+      <Section icon="salary" title="เงินเดือน" subtitle="ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้">
         <MoneyField
           id="salary"
           label="เงินเดือน + โบนัส ทั้งปี 40(1)"
@@ -29,8 +30,8 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
         />
       </Section>
 
-      <Section title="รายได้อื่น" subtitle="เปิดเฉพาะประเภทที่คุณมี">
-        <Disclosure title="ฟรีแลนซ์ / ค่านายหน้า 40(2)" summary={inc.freelance ? `${fmt(inc.freelance)} บาท` : 'ไม่มี'}>
+      <Section icon="coins" title="รายได้อื่น" subtitle="เปิดเฉพาะประเภทที่คุณมี">
+        <Disclosure icon="freelance" title="ฟรีแลนซ์ / ค่านายหน้า 40(2)" summary={inc.freelance ? `${fmt(inc.freelance)} บาท` : 'ไม่มี'}>
           <MoneyField
             id="freelance"
             label="ค่าจ้างงานฟรีแลนซ์ ค่านายหน้า ค่าเบี้ยประชุม"
@@ -40,7 +41,7 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
           />
         </Disclosure>
 
-        <Disclosure title="ค่าลิขสิทธิ์ 40(3)" summary={inc.royalty ? `${fmt(inc.royalty)} บาท` : 'ไม่มี'}>
+        <Disclosure icon="royalty" title="ค่าลิขสิทธิ์ 40(3)" summary={inc.royalty ? `${fmt(inc.royalty)} บาท` : 'ไม่มี'}>
           <MoneyField
             id="royalty"
             label="ค่าลิขสิทธิ์ / ค่าสิทธิ"
@@ -50,7 +51,7 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
           />
         </Disclosure>
 
-        <Disclosure title="ค่าเช่า 40(5)" summary={sumRent ? `${fmt(sumRent)} บาท · หักค่าใช้จ่าย ${fmt(expenseOf('40-5'))}` : 'ไม่มี'}>
+        <Disclosure icon="rent" title="ค่าเช่า 40(5)" summary={sumRent ? `${fmt(sumRent)} บาท · หักค่าใช้จ่าย ${fmt(expenseOf('40-5'))}` : 'ไม่มี'}>
           {(
             [
               ['building', 'บ้าน อาคาร สิ่งปลูกสร้าง'],
@@ -72,6 +73,7 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
         </Disclosure>
 
         <Disclosure
+          icon="professional"
           title="วิชาชีพอิสระ 40(6)"
           summary={inc.professional.medical + inc.professional.other ? `${fmt(inc.professional.medical + inc.professional.other)} บาท` : 'ไม่มี'}
         >
@@ -99,7 +101,7 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
         ).map(([key, title, label, rate]) => {
           const part = inc[key]
           return (
-            <Disclosure key={key} title={title} summary={part.amount ? `${fmt(part.amount)} บาท · หักค่าใช้จ่าย ${fmt(expenseOf(key === 'contract' ? '40-7' : '40-8'))}` : 'ไม่มี'}>
+            <Disclosure key={key} icon={key} title={title} summary={part.amount ? `${fmt(part.amount)} บาท · หักค่าใช้จ่าย ${fmt(expenseOf(key === 'contract' ? '40-7' : '40-8'))}` : 'ไม่มี'}>
               <MoneyField id={`${key}-amount`} label={label} value={part.amount} onChange={(v) => update((d) => void (d.income[key].amount = v))} />
               <Toggle
                 label="หักค่าใช้จ่ายตามจริง"
@@ -124,7 +126,7 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
         </p>
       </Section>
 
-      <Section title="ภาษีที่จ่ายล่วงหน้า">
+      <Section icon="receipt" title="ภาษีที่จ่ายล่วงหน้า">
         <MoneyField
           id="prepaid"
           label="ภาษีที่จ่ายตอนยื่น ภ.ง.ด.94 (ครึ่งปี)"

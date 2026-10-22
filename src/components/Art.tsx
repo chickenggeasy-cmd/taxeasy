@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
-export type ArtName = 'hero' | 'refund' | 'empty' | 'assistant'
+export type ArtName = 'hero' | 'refund' | 'empty' | 'assistant' | 'income' | 'deductions' | 'plan' | 'more'
 
 /**
  * ภาพตกแต่งจากโฟลเดอร์ images/ (เช่น images/hero.webp)

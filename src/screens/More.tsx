@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Section } from '../components/ui'
+import { PageHero, Section } from '../components/ui'
 import type { TaxRules } from '../engine/types'
 import { thaiDate } from '../lib/format'
 import type { RulesState } from '../lib/rules'
@@ -34,8 +34,9 @@ export function More({
   const [confirmReset, setConfirmReset] = useState(false)
 
   return (
-    <div className="flex flex-col gap-4">
-      <Section title="ปีภาษี" subtitle="เงินได้ระหว่าง 1 ม.ค. – 31 ธ.ค. ของปีที่เลือก">
+    <div className="anim-stagger flex flex-col gap-4">
+      <PageHero art="more" title="เพิ่มเติม" subtitle="ปีภาษี กฎที่ใช้คำนวณ และข้อมูลของคุณ" />
+      <Section icon="calendar" title="ปีภาษี" subtitle="เงินได้ระหว่าง 1 ม.ค. – 31 ธ.ค. ของปีที่เลือก">
         <div className="flex flex-wrap gap-2">
           {years.map((y) => (
             <button
@@ -55,6 +56,7 @@ export function More({
       </Section>
 
       <Section
+        icon="rules"
         title="กฎภาษีที่ใช้อยู่"
         subtitle={`ปี ${rules.taxYear} ฉบับที่ ${rules.revision} · อัปเดต ${rules.updatedAt}`}
         action={
@@ -80,7 +82,7 @@ export function More({
         </ul>
       </Section>
 
-      <Section title="ยื่นภาษีจริง">
+      <Section icon="send" title="ยื่นภาษีจริง">
         <p className="text-[15px]">
           ยื่นออนไลน์ได้ที่ระบบ e-Filing ของกรมสรรพากร โดยกรอกตัวเลขตามหน้าสรุป ผู้มีเงินเดือนอย่างเดียวใช้แบบ ภ.ง.ด.91 ผู้มีรายได้ประเภทอื่นด้วยใช้แบบ ภ.ง.ด.90
         </p>
@@ -89,7 +91,7 @@ export function More({
         </a>
       </Section>
 
-      <Section title="ข้อมูลของคุณ" subtitle="เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
+      <Section icon="lock" title="ข้อมูลของคุณ" subtitle="เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onExample} className="rounded-xl border border-line px-4 py-2 font-semibold">
             ใส่ข้อมูลตัวอย่าง

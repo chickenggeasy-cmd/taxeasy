@@ -170,8 +170,8 @@ export default function App() {
 
       <div className={`gutter mx-auto grid gap-6 pt-4 pb-40 md:pb-12 ${tab === 'summary' ? 'max-w-2xl' : 'max-w-6xl md:grid-cols-[minmax(0,1fr)_360px]'}`}>
         <main className="flex min-w-0 flex-col gap-4">
-          {state.example && (
-            <div className="overflow-hidden rounded-3xl border border-line bg-surface">
+          {state.example && tab === 'summary' && (
+            <div className="card anim-screen overflow-hidden rounded-3xl">
               <div className="bg-gradient-to-b from-accent-soft to-surface px-4 pt-4">
                 <Art name="hero" alt="" className="mx-auto block h-auto max-h-60 w-full max-w-xl object-contain" />
               </div>
@@ -181,10 +181,20 @@ export default function App() {
                   <b className="block font-display text-lg">ลองดูว่าภาษีง่ายๆ คำนวณให้คุณยังไง</b>
                   <span className="block text-sm text-muted">มนุษย์เงินเดือน 60,000 บาท/เดือน มีลูก 1 คน ดูแลแม่ 1 คน</span>
                 </p>
-                <button type="button" onClick={startFresh} className="shrink-0 rounded-xl bg-accent px-4 py-2 font-semibold text-accent-ink">
+                <button type="button" onClick={startFresh} className="shrink-0 rounded-2xl bg-accent px-5 py-2.5 font-semibold text-accent-ink shadow-md">
                   เริ่มกรอกของฉัน
                 </button>
               </div>
+            </div>
+          )}
+          {state.example && tab !== 'summary' && (
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-accent/60 bg-accent-soft/50 px-4 py-2.5">
+              <p className="min-w-0 text-sm">
+                <b className="text-accent">ข้อมูลตัวอย่าง</b> <span className="text-muted">ลองแก้ตัวเลขดูได้เลย</span>
+              </p>
+              <button type="button" onClick={startFresh} className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-sm font-semibold text-accent-ink">
+                เริ่มกรอกของฉัน
+              </button>
             </div>
           )}
           <div key={`${tab}-${year}`} className="anim-screen flex flex-col gap-4">
@@ -195,9 +205,22 @@ export default function App() {
           <aside className="hidden md:block">
             <div className="sticky top-24 flex flex-col gap-4">
               <Verdict result={result} />
-              <button type="button" onClick={() => go('summary')} className="text-left text-sm font-semibold text-accent">
-                ดูรายละเอียดการคำนวณ
-              </button>
+              <div className="card rounded-3xl p-4">
+                {[
+                  ['เงินได้ทั้งปี', fmt(result.totalIncome)],
+                  ['หักค่าใช้จ่าย + ลดหย่อน', fmt(result.totalExpense + result.elderlyExemption + result.totalDeductions)],
+                  ['เงินได้สุทธิ', fmt(result.netIncome)],
+                  ['ฐานภาษีสูงสุด', `${Math.round(result.marginalRate * 100)}%`],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-3 py-1.5 text-[15px]">
+                    <span className="text-muted">{k}</span>
+                    <span className="num font-semibold">{v}</span>
+                  </div>
+                ))}
+                <button type="button" onClick={() => go('summary')} className="mt-2 w-full rounded-2xl bg-accent-soft px-4 py-2.5 text-sm font-semibold text-accent">
+                  ดูรายละเอียดการคำนวณ
+                </button>
+              </div>
             </div>
           </aside>
         )}

@@ -23,6 +23,7 @@
   /* กรอบรองภาพตกแต่ง */
   --art: #e9edfd;
   --art-white: #ffffff;
+  --shadow: 0 1px 2px rgb(20 26 46 / 0.04), 0 10px 30px -16px rgb(35 64 201 / 0.18);
   --font-display: 'Bai Jamjuree', 'Leelawadee UI', 'Thonburi', sans-serif;
   --font-body: 'IBM Plex Sans Thai', 'Leelawadee UI', 'Thonburi', 'Noto Sans Thai', sans-serif;
 }
@@ -41,6 +42,7 @@
     --due: #ff9d61;
     --due-soft: #33200f;
     --art: #1d2552;
+    --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -18px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }
@@ -58,6 +60,7 @@
   --due: #ff9d61;
   --due-soft: #33200f;
   --art: #1d2552;
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -18px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
@@ -132,6 +135,8 @@ body {
 }
 body {
   margin: 0;
+  background-image: radial-gradient(1200px 420px at 50% -120px, var(--accent-soft), transparent 70%);
+  background-repeat: no-repeat;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -175,6 +180,37 @@ button:not(:disabled):active {
   from {
     opacity: 0;
   }
+}
+/* การ์ด: พื้นผิว + เส้นขอบบาง + เงานุ่ม */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+/* ลูก ๆ ค่อย ๆ โผล่ทีละใบ */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+.anim-stagger > * {
+  animation: rise-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.anim-stagger > *:nth-child(2) { animation-delay: 50ms; }
+.anim-stagger > *:nth-child(3) { animation-delay: 100ms; }
+.anim-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.anim-stagger > *:nth-child(5) { animation-delay: 200ms; }
+.anim-stagger > *:nth-child(6) { animation-delay: 240ms; }
+.anim-stagger > *:nth-child(n + 7) { animation-delay: 280ms; }
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.anim-grow {
+  transform-origin: left center;
+  animation: grow-x 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .anim-screen {
   animation: screen-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
