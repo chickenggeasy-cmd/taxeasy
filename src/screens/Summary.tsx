@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Art } from '../components/Art'
 import { Icon, IconTile, type IconName } from '../components/icons'
+import { ShareCard } from '../components/ShareCard'
 import { Staircase } from '../components/Staircase'
 import type { TaxResult, TaxRules } from '../engine/types'
+import { downloadIcs } from '../lib/calendar'
 import { daysUntil, fmt, pct, thaiDate } from '../lib/format'
 import { useAnimatedNumber } from '../lib/useAnimatedNumber'
 
@@ -109,6 +112,7 @@ function SectionTitle({ icon, title, subtitle }: { icon: IconName; title: string
 
 export function Summary({ result, rules, compact = false, onStart, onFiling }: { result: TaxResult; rules: TaxRules; compact?: boolean; onStart?: () => void; onFiling?: () => void }) {
   const online = daysUntil(rules.filingDeadlines.online)
+  const [sharing, setSharing] = useState(false)
   if (result.totalIncome === 0 && onStart) {
     return (
       <section className="card anim-stagger flex flex-col items-center gap-3 rounded-3xl p-6 text-center">
@@ -208,12 +212,31 @@ export function Summary({ result, rules, compact = false, onStart, onFiling }: {
       {!compact && (
         <div className="card flex items-center gap-3 rounded-2xl px-4 py-3">
           <IconTile name="calendar" size={36} />
-          <p className="min-w-0 text-sm text-muted">
+          <p className="min-w-0 flex-1 text-sm text-muted">
             ยื่นออนไลน์ได้ถึง <b className="text-ink">{thaiDate(rules.filingDeadlines.online)}</b>
             {online >= 0 && online <= 200 ? ` (อีก ${online} วัน)` : ''} · แบบกระดาษถึง {thaiDate(rules.filingDeadlines.paper)}
           </p>
+          {!__PREVIEW__ && (
+            <button type="button" onClick={() => downloadIcs(rules)} className="shrink-0 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent">
+              เพิ่มลงปฏิทิน
+            </button>
+          )}
         </div>
       )}
+
+      {!compact && !__PREVIEW__ && result.totalIncome > 0 &&
+        (sharing ? (
+          <ShareCard result={result} rules={rules} onClose={() => setSharing(false)} />
+        ) : (
+          <button type="button" onClick={() => setSharing(true)} className="card flex items-center gap-3 rounded-2xl px-4 py-3 text-left">
+            <IconTile name="share" size={36} />
+            <span className="min-w-0 flex-1">
+              <span className="block font-semibold">แชร์ผลลัพธ์เป็นรูป</span>
+              <span className="block text-sm text-muted">เลือกซ่อนยอดเงินได้ ส่งให้เพื่อนหรือเก็บไว้ดู</span>
+            </span>
+            <span aria-hidden className="text-xl text-muted">→</span>
+          </button>
+        ))}
     </div>
   )
 }

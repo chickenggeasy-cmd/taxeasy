@@ -1,11 +1,13 @@
 import { planSuggestions } from '../engine/plan'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { IconTile } from '../components/icons'
+import { BudgetPlanner } from '../components/BudgetPlanner'
 import { SpouseCompare } from '../components/SpouseCompare'
+import { WhatIf } from '../components/WhatIf'
 import { PageHero } from '../components/ui'
 import { fmt, pct } from '../lib/format'
 
-export function Plan({ input, rules, result, onAdd, onMarket }: { input: TaxInput; rules: TaxRules; result: TaxResult; onAdd: () => void; onMarket: () => void }) {
+export function Plan({ input, rules, result, update, onAdd, onMarket }: { input: TaxInput; rules: TaxRules; result: TaxResult; update: (fn: (draft: TaxInput) => void) => void; onAdd: () => void; onMarket: () => void }) {
   const items = planSuggestions(input, rules)
   const zeroTax = result.tax === 0
   const maxSaving = Math.max(1, ...items.map((i) => i.saving))
@@ -25,6 +27,8 @@ export function Plan({ input, rules, result, onAdd, onMarket }: { input: TaxInpu
           <p className="mt-2 text-sm text-due">ภาษีของคุณคิดจากวิธี 0.5% ของเงินได้ ค่าลดหย่อนเพิ่มจะไม่ช่วยลดภาษีส่วนนี้</p>
         )}
       </section>
+
+      <BudgetPlanner input={input} rules={rules} update={update} />
 
       {!zeroTax && items.length > 0 && (
         <section className="card rounded-3xl p-4">
@@ -57,6 +61,8 @@ export function Plan({ input, rules, result, onAdd, onMarket }: { input: TaxInpu
           </button>
         </section>
       )}
+
+      <WhatIf input={input} rules={rules} result={result} />
 
       <SpouseCompare input={input} rules={rules} />
 

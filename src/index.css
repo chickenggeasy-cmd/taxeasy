@@ -270,3 +270,8 @@ input[type='number']::-webkit-inner-spin-button {
     animation: none !important;
   }
 }
+.range {
+  accent-color: var(--accent);
+  height: 28px;
+  cursor: pointer;
+}

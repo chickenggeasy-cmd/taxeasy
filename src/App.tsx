@@ -117,7 +117,7 @@ export default function App() {
     income: <Income input={state.input} update={update} rules={rules} result={result} onHalfYear={() => go('halfyear')} />,
     halfyear: <HalfYear input={state.input} update={update} rules={rules} onBack={() => go('income')} />,
     deductions: <Deductions input={state.input} update={update} rules={rules} result={result} />,
-    plan: <Plan input={state.input} rules={rules} result={result} onAdd={() => go('deductions')} onMarket={() => go('market')} />,
+    plan: <Plan input={state.input} rules={rules} result={result} update={update} onAdd={() => go('deductions')} onMarket={() => go('market')} />,
     market: <Market onBack={() => go('plan')} />,
     more: (
       <More

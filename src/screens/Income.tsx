@@ -1,3 +1,4 @@
+import { ScanForm } from '../components/ScanForm'
 import { Disclosure, MoneyField, PageHero, Section, Segmented, Toggle } from '../components/ui'
 import { compareDividendChoice } from '../engine/plan'
 import { socialSecurityFromSalary, suggestedMonthlyWithholding } from '../engine/scenarios'
@@ -33,6 +34,7 @@ export function Income({ input, update, rules, result, onHalfYear }: { input: Ta
     <div className="anim-stagger flex flex-col gap-4">
       <PageHero art="income" title="รายได้ทั้งปี" subtitle="กรอกเฉพาะประเภทที่คุณมี แอปหักค่าใช้จ่ายตามกฎหมายให้เอง" />
       <Section icon="salary" title="เงินเดือน" subtitle={mo.enabled ? 'กรอกยอดต่อเดือน แอปคาดการณ์ทั้งปีให้' : 'ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้'}>
+        {!__PREVIEW__ && <ScanForm input={input} rules={rules} update={update} />}
         <Segmented
           label="วิธีกรอกเงินเดือน"
           value={mo.enabled ? 'monthly' : 'annual'}

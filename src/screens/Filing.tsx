@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Icon, IconTile } from '../components/icons'
 import { PageHero } from '../components/ui'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
+import { downloadIcs } from '../lib/calendar'
 import { documentChecklist, filingSteps, formType } from '../lib/filing'
 import { fmt, thaiDate } from '../lib/format'
 import { readJSON, writeJSON } from '../lib/storage'
@@ -48,6 +49,17 @@ export function Filing({ input, result, rules, onBack }: { input: TaxInput; resu
         ← กลับ
       </button>
       <PageHero art="more" title="ยื่นภาษีจริง" subtitle={`แบบ ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · ยื่นออนไลน์ได้ถึง ${thaiDate(rules.filingDeadlines.online)}`} />
+
+      {!__PREVIEW__ && (
+        <button type="button" onClick={() => downloadIcs(rules)} className="card flex items-center gap-3 rounded-2xl px-4 py-3 text-left">
+          <IconTile name="calendar" size={36} />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">เพิ่มวันครบกำหนดลงปฏิทิน</span>
+            <span className="block text-sm text-muted">ปฏิทินในมือถือจะเตือนล่วงหน้า 7 วัน และ 1 วัน</span>
+          </span>
+          <span aria-hidden className="text-xl text-muted">+</span>
+        </button>
+      )}
 
       <section className="card rounded-3xl p-4">
         <div className="mb-3 flex items-center gap-3">
