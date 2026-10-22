@@ -6,6 +6,7 @@ import { defaultTaxYear, fmt } from './lib/format'
 import { fetchRules, initialRules, type RulesState } from './lib/rules'
 import { readJSON, removeKey, writeJSON } from './lib/storage'
 import { Deductions } from './screens/Deductions'
+import { Filing } from './screens/Filing'
 import { Income } from './screens/Income'
 import { More } from './screens/More'
 import { Plan } from './screens/Plan'
@@ -14,7 +15,7 @@ import { Art } from './components/Art'
 import { Assistant } from './components/Assistant'
 import { DisplaySettings } from './components/DisplaySettings'
 
-type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more'
+type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more' | 'filing'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'summary', label: 'สรุป', icon: 'M4 19V9m6 10V5m6 14v-7m4 7H2' },
@@ -109,7 +110,8 @@ export default function App() {
   }
 
   const screen = {
-    summary: <Summary result={result} rules={rules} onStart={() => go('income')} />,
+    summary: <Summary result={result} rules={rules} onStart={() => go('income')} onFiling={() => go('filing')} />,
+    filing: <Filing input={state.input} result={result} rules={rules} onBack={() => go('summary')} />,
     income: <Income input={state.input} update={update} rules={rules} result={result} />,
     deductions: <Deductions input={state.input} update={update} rules={rules} result={result} />,
     plan: <Plan input={state.input} rules={rules} result={result} onAdd={() => go('deductions')} />,
@@ -126,6 +128,7 @@ export default function App() {
           removeKey(inputKey(year))
           startFresh()
         }}
+        onFiling={() => go('filing')}
         onExample={() => {
           removeKey(inputKey(year))
           setState({ input: exampleInput(year, rules), example: true })
@@ -136,7 +139,7 @@ export default function App() {
   }[tab]
 
   const balanceText = result.balance < 0 ? `ได้คืน ฿${fmt(-result.balance)}` : result.balance > 0 ? `จ่ายเพิ่ม ฿${fmt(result.balance)}` : 'ไม่ต้องจ่ายเพิ่ม'
-  const title = TABS.find((t) => t.id === tab)!.label
+  const title = TABS.find((t) => t.id === tab)?.label ?? 'ยื่นภาษี'
 
   return (
     <div className="min-h-full">

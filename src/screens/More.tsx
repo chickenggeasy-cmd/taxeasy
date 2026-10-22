@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PageHero, Section } from '../components/ui'
 import type { TaxRules } from '../engine/types'
 import { thaiDate } from '../lib/format'
+import { downloadBackup, restoreBackup } from '../lib/backup'
 import type { RulesState } from '../lib/rules'
 
 const SOURCE_LABEL = {
@@ -20,6 +21,7 @@ export function More({
   refreshing,
   onReset,
   onExample,
+  onFiling,
 }: {
   rules: TaxRules
   rulesState: RulesState
@@ -30,8 +32,10 @@ export function More({
   refreshing: boolean
   onReset: () => void
   onExample: () => void
+  onFiling: () => void
 }) {
   const [confirmReset, setConfirmReset] = useState(false)
+  const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   return (
     <div className="anim-stagger flex flex-col gap-4">
@@ -83,15 +87,45 @@ export function More({
       </Section>
 
       <Section icon="send" title="ยื่นภาษีจริง">
-        <p className="text-[15px]">
-          ยื่นออนไลน์ได้ที่ระบบ e-Filing ของกรมสรรพากร โดยกรอกตัวเลขตามหน้าสรุป ผู้มีเงินเดือนอย่างเดียวใช้แบบ ภ.ง.ด.91 ผู้มีรายได้ประเภทอื่นด้วยใช้แบบ ภ.ง.ด.90
-        </p>
-        <a href="https://efiling.rd.go.th/" target="_blank" rel="noreferrer" className="rounded-xl bg-accent px-4 py-3 text-center font-semibold text-accent-ink">
-          เปิดเว็บ e-Filing
-        </a>
+        <p className="text-[15px]">ดูทีละขั้นว่าต้องกรอกตัวเลขไหนในระบบ e-Filing พร้อมรายการเอกสารที่ต้องเตรียม</p>
+        <button type="button" onClick={onFiling} className="rounded-2xl bg-accent px-4 py-3 text-center font-semibold text-accent-ink shadow-md">
+          ดูวิธียื่นภาษีและเอกสาร
+        </button>
       </Section>
 
       <Section icon="lock" title="ข้อมูลของคุณ" subtitle="เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
+        <div className="flex flex-col gap-2 rounded-2xl bg-paper p-3">
+          <p className="text-sm">
+            <b>สำรองข้อมูล</b> <span className="text-muted">ย้ายไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={downloadBackup} className="rounded-xl bg-accent px-4 py-2 font-semibold text-accent-ink">
+              บันทึกเป็นไฟล์
+            </button>
+            <label className="cursor-pointer rounded-xl border border-line bg-surface px-4 py-2 font-semibold">
+              กู้คืนจากไฟล์
+              <input
+                id="restore-file"
+                type="file"
+                accept="application/json,.json"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (!file) return
+                  try {
+                    const n = restoreBackup(await file.text())
+                    setRestoreMsg({ ok: true, text: `กู้คืน ${n} รายการแล้ว กำลังโหลดใหม่…` })
+                    setTimeout(() => window.location.reload(), 900)
+                  } catch (err) {
+                    setRestoreMsg({ ok: false, text: (err as Error).message })
+                  }
+                }}
+              />
+            </label>
+          </div>
+          {restoreMsg && <p className={`text-sm ${restoreMsg.ok ? 'text-refund' : 'text-due'}`}>{restoreMsg.text}</p>}
+        </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onExample} className="rounded-xl border border-line px-4 py-2 font-semibold">
             ใส่ข้อมูลตัวอย่าง

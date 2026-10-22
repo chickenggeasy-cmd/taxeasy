@@ -1,5 +1,5 @@
 import { Art } from '../components/Art'
-import { IconTile, type IconName } from '../components/icons'
+import { Icon, IconTile, type IconName } from '../components/icons'
 import { Staircase } from '../components/Staircase'
 import type { TaxResult, TaxRules } from '../engine/types'
 import { daysUntil, fmt, pct, thaiDate } from '../lib/format'
@@ -107,7 +107,7 @@ function SectionTitle({ icon, title, subtitle }: { icon: IconName; title: string
   )
 }
 
-export function Summary({ result, rules, compact = false, onStart }: { result: TaxResult; rules: TaxRules; compact?: boolean; onStart?: () => void }) {
+export function Summary({ result, rules, compact = false, onStart, onFiling }: { result: TaxResult; rules: TaxRules; compact?: boolean; onStart?: () => void; onFiling?: () => void }) {
   const online = daysUntil(rules.filingDeadlines.online)
   if (result.totalIncome === 0 && onStart) {
     return (
@@ -188,6 +188,19 @@ export function Summary({ result, rules, compact = false, onStart }: { result: T
             ))}
           </ul>
         </section>
+      )}
+
+      {!compact && onFiling && (
+        <button type="button" onClick={onFiling} className="flex items-center gap-3 rounded-3xl bg-accent p-4 text-left text-accent-ink shadow-md">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-accent-ink/15">
+            <Icon name="send" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg font-semibold">พร้อมยื่นภาษีแล้ว?</span>
+            <span className="block text-sm opacity-85">ดูทีละขั้นว่ากรอกอะไรใน e-Filing และต้องเตรียมเอกสารอะไร</span>
+          </span>
+          <span aria-hidden className="text-xl">→</span>
+        </button>
       )}
 
       {!compact && (
