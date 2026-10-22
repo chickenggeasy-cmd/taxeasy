@@ -1,0 +1,64 @@
+# ทุกครั้งที่ push ขึ้น main: ทดสอบ → build → ใส่ไลบรารี PHP → เก็บผลไว้ในสาขา xampp
+# บนเครื่อง XAMPP ใช้ `git pull` ในโฟลเดอร์ Texeasy เพื่อรับเวอร์ชันล่าสุด
+name: Build for XAMPP
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xampp-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Test tax engine
+        run: npm test
+
+      - name: Build app
+        run: npm run build
+
+      - name: Install PHP libraries (AI assistant)
+        run: |
+          composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --working-dir=dist/server
+          rm -rf dist/server/vendor/anthropic-ai/sdk/{tests,fixtures,examples,scripts}
+
+      - name: Publish to xampp branch
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin xampp >/dev/null; then
+            git fetch --depth=1 origin xampp
+            git worktree add out FETCH_HEAD
+            git -C out checkout -B xampp
+          else
+            git worktree add --orphan -b xampp out
+          fi
+          find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a dist/. out/
+          cd out
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -q -m "Build from ${GITHUB_SHA::7}: ${COMMIT_MSG%%$'\n'*}"
+            git push origin xampp
+          fi

@@ -25,6 +25,26 @@
 
 ถ้า MySQL ของคุณตั้งรหัสผ่าน root ไว้ ให้แก้ในไฟล์ `server\config.php`
 
+### อัปเดตเป็นเวอร์ชันล่าสุดด้วย git (แนะนำแทนการโหลด zip)
+
+ทุกครั้งที่มีการแก้โค้ด GitHub จะ build แอปให้อัตโนมัติ แล้วเก็บไว้ในสาขา `xampp` ต้องติดตั้ง [Git for Windows](https://git-scm.com/download/win) ก่อน
+
+ติดตั้งครั้งแรก (เปิด Terminal ใน VS Code):
+
+```
+cd C:\xampp\htdocs\project_data
+git clone -b xampp https://github.com/chickenggeasy-cmd/taxeasy.git Texeasy
+```
+
+อัปเดตครั้งต่อไป:
+
+```
+cd C:\xampp\htdocs\project_data\Texeasy
+git pull
+```
+
+ไฟล์ `server\config.local.php` (API key) ที่คุณสร้างเอง จะไม่ถูก git แตะต้อง
+
 ### เปิดบนมือถือ
 
 - มือถือกับคอมต้องต่อ Wi-Fi วงเดียวกัน
