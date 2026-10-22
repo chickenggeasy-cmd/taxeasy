@@ -58,6 +58,9 @@ page_start('กฎภาษี');
 
 <section class="card">
   <h2>AI ผู้ช่วย</h2>
+  <?php if (PHP_VERSION_ID < 80100): ?>
+    <p class="flash err">AI ผู้ช่วยต้องใช้ PHP 8.1 ขึ้นไป เซิร์ฟเวอร์นี้ใช้ PHP <?= h(PHP_VERSION) ?> ส่วนอื่นของแอปใช้งานได้ตามปกติ ดูวิธีอัปเกรดใน README.md</p>
+  <?php endif ?>
   <p><?= $aiOn ? '<span class="pill published">เปิดใช้งาน</span> รุ่น ' . h(config()['ai']['model']) : '<span class="pill archived">ยังไม่ได้ตั้งค่า</span> ใส่ API key ในไฟล์ <code>server/config.php</code> เพื่อเปิดใช้งาน' ?></p>
   <?php
   try {

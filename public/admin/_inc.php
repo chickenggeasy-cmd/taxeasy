@@ -57,7 +57,7 @@ function flash(?string $msg = null, string $type = 'ok'): ?array
     return $f;
 }
 
-function redirect(string $to): never
+function redirect(string $to): void
 {
     header("Location: $to");
     exit;

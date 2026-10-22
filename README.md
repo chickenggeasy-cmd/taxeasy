@@ -23,6 +23,10 @@
 4. **สร้างบัญชีแอดมิน:** เปิด <http://localhost/project_data/Texeasy/admin/> แล้วตั้งชื่อผู้ใช้และรหัสผ่าน (ทำได้ครั้งเดียว ตอนที่ยังไม่มีบัญชี)
 5. **เปิดแอป:** <http://localhost/project_data/Texeasy/>
 
+ถ้า Apache ใน XAMPP ใช้พอร์ตอื่น (ดูช่อง Port(s) ใน XAMPP Control Panel เช่น 8080) ให้ใส่พอร์ตต่อท้าย เช่น <http://localhost:8080/project_data/Texeasy/>
+
+**รุ่น PHP:** แอปและหลังบ้านใช้ได้กับ PHP 8.0 ขึ้นไป ส่วน AI ผู้ช่วยต้องใช้ **PHP 8.1 ขึ้นไป** ดูรุ่นได้ที่หน้าแรกของ phpMyAdmin (ช่อง Web server → PHP version) ถ้าต่ำกว่า 8.1 ให้ติดตั้ง XAMPP รุ่นใหม่ (PHP 8.2) จาก <https://www.apachefriends.org> โดยสำรองโฟลเดอร์ `htdocs` และ Export ฐานข้อมูลไว้ก่อน
+
 ถ้า MySQL ของคุณตั้งรหัสผ่าน root ไว้ ให้แก้ในไฟล์ `server\config.php`
 
 ### อัปเดตเป็นเวอร์ชันล่าสุดด้วย git (แนะนำแทนการโหลด zip)

@@ -6,13 +6,14 @@ export interface ChatMessage {
   content: string
 }
 
-export type AssistantStatus = 'checking' | 'ready' | 'not_configured' | 'offline'
+export type AssistantStatus = 'checking' | 'ready' | 'not_configured' | 'php_version' | 'offline'
 
 export async function checkAssistant(): Promise<AssistantStatus> {
   if (__PREVIEW__) return 'offline'
   try {
     const res = await fetch('./api/chat.php', { cache: 'no-store' })
-    const data = (await res.json()) as { enabled?: boolean }
+    const data = (await res.json()) as { enabled?: boolean; reason?: string | null }
+    if (data.reason === 'php_version') return 'php_version'
     return data.enabled ? 'ready' : 'not_configured'
   } catch {
     return 'offline'

@@ -125,6 +125,7 @@ export function Assistant({ input, result, rules, raised }: { input: TaxInput; r
                   ตอนนี้แอปไม่ได้เชื่อมกับเซิร์ฟเวอร์ ใช้น้องภาษีได้เมื่อเปิดแอปผ่านเซิร์ฟเวอร์ที่ติดตั้งหลังบ้านไว้ ส่วนการคำนวณภาษียังใช้ได้ตามปกติ
                 </Notice>
               )}
+              {status === 'php_version' && <Notice>เซิร์ฟเวอร์นี้ใช้ PHP รุ่นเก่า น้องภาษีต้องใช้ PHP 8.1 ขึ้นไป แจ้งผู้ดูแลระบบให้อัปเกรด XAMPP ส่วนการคำนวณภาษียังใช้ได้ตามปกติ</Notice>}
               {status === 'not_configured' && <Notice>ผู้ดูแลระบบยังไม่ได้เปิดใช้ AI ผู้ช่วย (ต้องใส่ API key ในไฟล์ server/config.php)</Notice>}
 
               {status === 'ready' && consent === null && (

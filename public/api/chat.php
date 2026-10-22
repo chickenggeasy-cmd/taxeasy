@@ -15,14 +15,26 @@ const MAX_MESSAGES = 20;
 const MAX_CHARS = 2000;
 const MAX_CONTEXT_CHARS = 6000;
 
+// ไลบรารี Anthropic ต้องใช้ PHP 8.1 ขึ้นไป
+const MIN_PHP = 80100;
+$phpOk = PHP_VERSION_ID >= MIN_PHP;
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // แอปถามว่าเปิดใช้ AI หรือยัง
-    json_response(['ok' => true, 'enabled' => config()['ai']['api_key'] !== '']);
+    json_response([
+        'ok' => true,
+        'enabled' => $phpOk && config()['ai']['api_key'] !== '',
+        'reason' => $phpOk ? null : 'php_version',
+        'php' => PHP_VERSION,
+    ]);
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น'], 405);
 }
 
+if (!$phpOk) {
+    json_response(['ok' => false, 'code' => 'php_version', 'error' => 'AI ผู้ช่วยต้องใช้ PHP 8.1 ขึ้นไป (เซิร์ฟเวอร์นี้ใช้ ' . PHP_VERSION . ')'], 503);
+}
 $ai = config()['ai'];
 if ($ai['api_key'] === '') {
     json_response(['ok' => false, 'code' => 'not_configured', 'error' => 'ผู้ดูแลยังไม่ได้เปิดใช้ AI ผู้ช่วย'], 503);
@@ -114,6 +126,7 @@ if (preg_match('/^claude-(opus|sonnet|fable)-5/', $model)) {
 try {
     $client = new Client(apiKey: (string) $ai['api_key'], baseUrl: ($ai['base_url'] ?? null) ?: null);
     $message = $client->beta->messages->create(...$params);
+    // หมายเหตุ: การกระจาย array ที่มี key เป็นชื่อพารามิเตอร์ (...$params) ใช้ได้ตั้งแต่ PHP 8.1 ซึ่งตรวจไว้ด้านบนแล้ว
 } catch (AuthenticationException) {
     error_log('[taxeasy] chat: invalid API key');
     json_response(['ok' => false, 'error' => 'API key ของ AI ไม่ถูกต้อง แจ้งผู้ดูแลระบบ'], 502);
