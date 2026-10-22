@@ -94,6 +94,7 @@ export function More({
       </Section>
 
       <Section icon="lock" title="ข้อมูลของคุณ" subtitle="เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
+        {!__PREVIEW__ && (
         <div className="flex flex-col gap-2 rounded-2xl bg-paper p-3">
           <p className="text-sm">
             <b>สำรองข้อมูล</b> <span className="text-muted">ย้ายไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์</span>
@@ -126,6 +127,7 @@ export function More({
           </div>
           {restoreMsg && <p className={`text-sm ${restoreMsg.ok ? 'text-refund' : 'text-due'}`}>{restoreMsg.text}</p>}
         </div>
+        )}
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onExample} className="rounded-xl border border-line px-4 py-2 font-semibold">
             ใส่ข้อมูลตัวอย่าง
