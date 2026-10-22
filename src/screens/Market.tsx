@@ -62,10 +62,12 @@ function MarketCard({ item, range }: { item: MarketItem; range: MarketRange }) {
         )}
       </div>
       <div className="flex flex-col items-end gap-1">
-        <Sparkline points={item.points} up={rangeUp} />
-        <span className={`num text-xs font-semibold ${rangeUp ? 'text-refund' : 'text-due'}`}>
-          {signed(item.rangeChangePct, '%')} {range === '1d' ? 'จากเปิดตลาด' : `ใน ${RANGE_LABEL[range]}`}
-        </span>
+        <Sparkline points={item.points} up={range === '1d' ? dayUp : rangeUp} />
+        {range !== '1d' && (
+          <span className={`num text-xs font-semibold ${rangeUp ? 'text-refund' : 'text-due'}`}>
+            {signed(item.rangeChangePct, '%')} ใน {RANGE_LABEL[range]}
+          </span>
+        )}
       </div>
     </li>
   )
