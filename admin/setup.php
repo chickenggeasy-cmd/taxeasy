@@ -21,14 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pass = (string) ($_POST['password'] ?? '');
     if (!preg_match('/^[a-zA-Z0-9_.-]{3,50}$/', $user)) {
         $error = 'ชื่อผู้ใช้ต้องเป็นภาษาอังกฤษหรือตัวเลข 3–50 ตัว';
-    } elseif (mb_strlen($pass) < 8) {
-        $error = 'รหัสผ่านต้องยาวอย่างน้อย 8 ตัวอักษร';
-    } elseif ($pass !== ($_POST['password2'] ?? '')) {
-        $error = 'รหัสผ่านสองช่องไม่ตรงกัน';
+    } elseif ($problem = password_problem($pass, (string) ($_POST['password2'] ?? ''))) {
+        $error = $problem;
     } else {
         db()->prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)')->execute([$user, password_hash($pass, PASSWORD_DEFAULT)]);
         session_regenerate_id(true);
         $_SESSION['admin_id'] = (int) db()->lastInsertId();
+        $_SESSION['last_seen'] = time();
         audit('setup', "สร้างบัญชีผู้ดูแล $user");
         flash('สร้างบัญชีผู้ดูแลเรียบร้อย');
         redirect('index.php');
