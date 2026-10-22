@@ -1,0 +1,6 @@
+node_modules/
+dist/
+dist-preview/
+public/server/vendor/
+public/server/config.local.php
+*.zip

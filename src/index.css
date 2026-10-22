@@ -1,0 +1,119 @@
+@import '@fontsource/ibm-plex-sans-thai/thai-400.css';
+@import '@fontsource/ibm-plex-sans-thai/latin-400.css';
+@import '@fontsource/ibm-plex-sans-thai/thai-600.css';
+@import '@fontsource/ibm-plex-sans-thai/latin-600.css';
+@import '@fontsource/bai-jamjuree/thai-600.css';
+@import '@fontsource/bai-jamjuree/latin-600.css';
+@import 'tailwindcss';
+
+/* Layout: ฟอร์มใช้มือเดียวบนมือถือ + แถบเมนูล่าง / บนจอกว้างวางสรุปภาษีค้างไว้ด้านขวา */
+:root {
+  --paper: #f3f5fa;
+  --surface: #ffffff;
+  --ink: #141a2e;
+  --muted: #5b6480;
+  --line: #dde2ee;
+  --accent: #2340c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7ebfd;
+  --refund: #0d7a50;
+  --refund-soft: #e1f4ea;
+  --due: #b04a14;
+  --due-soft: #fbece2;
+  /* กรอบรองภาพตกแต่ง: สีอ่อนทั้งสองธีม เพื่อให้ภาพพื้นขาวกลืนไปกับกรอบ */
+  --art: #e9edfd;
+  --art-white: #ffffff;
+  --font-display: 'Bai Jamjuree', 'Leelawadee UI', 'Thonburi', sans-serif;
+  --font-body: 'IBM Plex Sans Thai', 'Leelawadee UI', 'Thonburi', 'Noto Sans Thai', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #0d1120;
+    --surface: #161b2e;
+    --ink: #e8ebf5;
+    --muted: #9aa2bd;
+    --line: #272e48;
+    --accent: #8fa2ff;
+    --accent-ink: #0d1120;
+    --accent-soft: #1d2552;
+    --refund: #52d49f;
+    --refund-soft: #0f2c21;
+    --due: #ff9d61;
+    --due-soft: #33200f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme='dark'] {
+  --paper: #0d1120;
+  --surface: #161b2e;
+  --ink: #e8ebf5;
+  --muted: #9aa2bd;
+  --line: #272e48;
+  --accent: #8fa2ff;
+  --accent-ink: #0d1120;
+  --accent-soft: #1d2552;
+  --refund: #52d49f;
+  --refund-soft: #0f2c21;
+  --due: #ff9d61;
+  --due-soft: #33200f;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-refund: var(--refund);
+  --color-refund-soft: var(--refund-soft);
+  --color-due: var(--due);
+  --color-due-soft: var(--due-soft);
+  --color-art: var(--art);
+  --color-art-white: var(--art-white);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-tap-highlight-color: transparent;
+}
+body {
+  margin: 0;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  text-wrap: balance;
+  line-height: 1.25;
+}
+.num {
+  font-variant-numeric: tabular-nums;
+}
+.gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+input[type='number']::-webkit-inner-spin-button {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

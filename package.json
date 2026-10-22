@@ -1,0 +1,29 @@
+{
+  "name": "taxeasy",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build && node scripts/build-seed.mjs",
+    "test": "vitest run",
+    "seed": "node scripts/build-seed.mjs"
+  },
+  "dependencies": {
+    "@fontsource/bai-jamjuree": "^5.1.0",
+    "@fontsource/ibm-plex-sans-thai": "^5.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/react": "^18.3.23",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.5.2",
+    "tailwindcss": "^4.1.10",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5",
+    "vite-plugin-singlefile": "^2.2.0",
+    "vitest": "^3.2.4"
+  }
+}

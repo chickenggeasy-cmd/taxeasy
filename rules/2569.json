@@ -1,0 +1,135 @@
+{
+  "taxYear": 2569,
+  "revision": 1,
+  "updatedAt": "2026-10-22",
+  "notes": "กฎภาษีเงินได้บุคคลธรรมดา ปีภาษี 2569 (เงินได้ 1 ม.ค. – 31 ธ.ค. 2569 ยื่นภาษีต้นปี 2570) – มาตรการพิเศษของปีนี้ยังรอประกาศ จะอัปเดตเมื่อมีประกาศทางการ",
+  "sources": [
+    {
+      "title": "กรมสรรพากร – ภาษีเงินได้บุคคลธรรมดา",
+      "url": "https://www.rd.go.th/59670.html"
+    },
+    {
+      "title": "FlowAccount – เพดานประกันสังคมใหม่ 2569 (17,500 บาท)",
+      "url": "https://flowaccount.com/blog/new-social-security-ceiling-2026/"
+    },
+    {
+      "title": "Eastspring – เงื่อนไขสิทธิประโยชน์ทางภาษี ThaiESGX",
+      "url": "https://www.eastspring.co.th/docs/default-source/fund-documents/criteria-and-conditions-for-using-thaiesgx-tax-benefits.pdf"
+    }
+  ],
+  "filingDeadlines": {
+    "paper": "2570-03-31",
+    "online": "2570-04-08"
+  },
+  "brackets": [
+    {
+      "upTo": 150000,
+      "rate": 0
+    },
+    {
+      "upTo": 300000,
+      "rate": 0.05
+    },
+    {
+      "upTo": 500000,
+      "rate": 0.1
+    },
+    {
+      "upTo": 750000,
+      "rate": 0.15
+    },
+    {
+      "upTo": 1000000,
+      "rate": 0.2
+    },
+    {
+      "upTo": 2000000,
+      "rate": 0.25
+    },
+    {
+      "upTo": 5000000,
+      "rate": 0.3
+    },
+    {
+      "upTo": null,
+      "rate": 0.35
+    }
+  ],
+  "minimumTax": {
+    "rate": 0.005,
+    "incomeThreshold": 120000,
+    "exemptIfNotExceed": 5000
+  },
+  "elderlyExemption": 190000,
+  "expenses": {
+    "employment": {
+      "rate": 0.5,
+      "max": 100000
+    },
+    "royalty": {
+      "rate": 0.5,
+      "max": 100000
+    },
+    "rent": {
+      "building": 0.3,
+      "agriLand": 0.2,
+      "otherLand": 0.15,
+      "vehicle": 0.3,
+      "other": 0.1
+    },
+    "professional": {
+      "medical": 0.6,
+      "other": 0.3
+    },
+    "contract": {
+      "rate": 0.6
+    },
+    "business": {
+      "rate": 0.6
+    }
+  },
+  "deductions": {
+    "personal": 60000,
+    "spouse": 60000,
+    "child": 30000,
+    "childSecondPlusBornFrom2561": 60000,
+    "parent": 30000,
+    "disabledCare": 60000,
+    "prenatal": 60000,
+    "socialSecurity": 10500,
+    "lifeInsurance": 100000,
+    "healthInsurance": 25000,
+    "lifeHealthCombined": 100000,
+    "spouseLifeInsurance": 10000,
+    "parentHealthInsurance": 15000,
+    "pensionInsurance": {
+      "rate": 0.15,
+      "max": 200000
+    },
+    "pvd": {
+      "rate": 0.15,
+      "max": 500000
+    },
+    "gpf": {
+      "rate": 0.3,
+      "max": 500000
+    },
+    "nsf": 30000,
+    "rmf": {
+      "rate": 0.3,
+      "max": 500000
+    },
+    "ssf": null,
+    "retirementCombined": 500000,
+    "thaiEsg": {
+      "rate": 0.3,
+      "max": 300000
+    },
+    "thaiEsgxLtf": 50000,
+    "homeLoanInterest": 100000,
+    "socialEnterprise": 100000,
+    "politicalDonation": 10000,
+    "donationCapRate": 0.1
+  },
+  "measures": []
+}
