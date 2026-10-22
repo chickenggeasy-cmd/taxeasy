@@ -5,6 +5,13 @@ import { fetchMarket, type MarketData, type MarketItem, type MarketRange } from 
 
 const RANGE_LABEL: Record<MarketRange, string> = { '1d': 'วันนี้', '1mo': '1 เดือน', '6mo': '6 เดือน', '1y': '1 ปี' }
 const REFRESH_MS = 30_000
+
+/** หน่วยของตัวเลขแต่ละการ์ด: ดัชนีเป็น "จุด" */
+function unitOf(item: MarketItem): string {
+  if (item.symbol === 'GC=F') return 'ดอลลาร์ต่อออนซ์'
+  if (item.symbol === 'THB=X') return 'บาทต่อ 1 ดอลลาร์'
+  return 'จุด'
+}
 const num = (v: number) => v.toLocaleString('th-TH', { maximumFractionDigits: 2, minimumFractionDigits: v < 100 ? 2 : 0 })
 const signed = (v: number | null, suffix = '') => (v === null ? '—' : `${v > 0 ? '+' : ''}${v.toLocaleString('th-TH', { maximumFractionDigits: 2 })}${suffix}`)
 
@@ -54,7 +61,9 @@ function MarketCard({ item, range }: { item: MarketItem; range: MarketRange }) {
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{item.name}</p>
         <p className="truncate text-xs text-muted">{item.nameTh}</p>
-        <p className="num mt-1 font-display text-xl font-semibold">{num(item.price)}</p>
+        <p className="num mt-1 font-display text-xl font-semibold">
+          {num(item.price)} <span className="font-body text-xs font-normal text-muted">{unitOf(item)}</span>
+        </p>
         {item.changePct !== null && (
           <p className={`num text-sm font-semibold ${dayUp ? 'text-refund' : 'text-due'}`}>
             {dayUp ? '▲' : '▼'} {signed(item.change)} ({signed(item.changePct, '%')}) <span className="font-normal text-muted">วันนี้</span>
@@ -160,6 +169,27 @@ export function Market({ onBack }: { onBack: () => void }) {
           ข้อมูลจาก {data.source} · หุ้นไทยล่าช้าประมาณ 15 นาทีตามข้อกำหนดของตลาด ตลาดอื่นล่าช้าต่างกันไป · ไม่ใช่คำแนะนำการลงทุน
         </p>
       )}
+
+      <section className="card rounded-3xl p-4">
+        <div className="mb-2 flex items-center gap-3">
+          <IconTile name="bulb" />
+          <h2 className="text-lg font-semibold">อ่านตัวเลขยังไง</h2>
+        </div>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-[15px]">
+          <li>
+            <b>ดัชนี</b> คือตัวเลขสรุปภาพรวมราคาหุ้นหลายตัวรวมกัน หน่วยเป็น “จุด” ไม่ใช่บาทหรือดอลลาร์ เช่น S&P 500 รวมหุ้นบริษัทใหญ่ 500 แห่งของสหรัฐฯ
+          </li>
+          <li>
+            แต่ละดัชนีเริ่มนับจากฐานไม่เท่ากัน จึงเทียบกันด้วยตัวเลขจุดไม่ได้ <b>ให้ดู % การเปลี่ยนแปลง</b>
+          </li>
+          <li>
+            <b>▲ +44.6 (+0.58%) วันนี้</b> แปลว่าเพิ่มขึ้น 44.6 จุด หรือ 0.58% จากราคาปิดของวันทำการก่อนหน้า
+          </li>
+          <li>
+            <b>ค่าเงินบาท</b> ตัวเลขยิ่งสูง บาทยิ่งอ่อน (ต้องใช้เงินบาทมากขึ้นแลก 1 ดอลลาร์)
+          </li>
+        </ul>
+      </section>
 
       <section className="card rounded-3xl p-4">
         <div className="mb-2 flex items-center gap-3">
