@@ -55,6 +55,11 @@ export function buildContext(input: TaxInput, result: TaxResult, rules: TaxRules
   if (inv.dividends + inv.fundDividends + inv.interest > 0) {
     lines.push(`เงินปันผลหุ้นไทย ${fmt(inv.dividends)} (บริษัทเสียภาษี ${pct(inv.dividendCorpRate)}) เงินปันผลกองทุน ${fmt(inv.fundDividends)} ดอกเบี้ย ${fmt(inv.interest)} · ${inv.includeDividends ? 'นำเงินปันผลมารวมคำนวณ' : 'ไม่นำเงินปันผลมารวม'}`)
   }
+  const fx = input.income.foreign
+  if (fx.employment + fx.investment > 0) lines.push(`เงินได้ต่างประเทศที่นำเข้าไทย: ค่าจ้าง ${fmt(fx.employment)} การลงทุน ${fmt(fx.investment)} ภาษีที่เสียต่างประเทศ ${fmt(fx.taxPaid)}${fx.hasTreaty ? ' (มีอนุสัญญาภาษีซ้อน)' : ''}`)
+  if (input.profile.married && input.profile.spouseHasIncome && input.spouse.salary + input.spouse.freelance > 0) {
+    lines.push(`คู่สมรสมีเงินได้ ${fmt(input.spouse.salary + input.spouse.freelance)} บาท (ใช้เทียบยื่นแยก/ยื่นรวมในแอป)`)
+  }
   if (input.deductions.children.length) lines.push(`บุตรเกิดปี: ${input.deductions.children.join(', ')}`)
   return lines.join('\n')
 }

@@ -1,6 +1,7 @@
 import { planSuggestions } from '../engine/plan'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { IconTile } from '../components/icons'
+import { SpouseCompare } from '../components/SpouseCompare'
 import { PageHero } from '../components/ui'
 import { fmt, pct } from '../lib/format'
 
@@ -56,6 +57,8 @@ export function Plan({ input, rules, result, onAdd, onMarket }: { input: TaxInpu
           </button>
         </section>
       )}
+
+      <SpouseCompare input={input} rules={rules} />
 
       <button type="button" onClick={onMarket} className="card flex items-center gap-3 rounded-3xl p-4 text-left">
         <IconTile name="saving" />

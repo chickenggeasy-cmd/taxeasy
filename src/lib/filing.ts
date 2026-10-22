@@ -23,6 +23,8 @@ export function formType(input: TaxInput): FormType {
   const other =
     (i.investment.includeDividends ? i.investment.dividends + i.investment.fundDividends : 0) +
     (i.investment.includeInterest ? i.investment.interest : 0) +
+    i.foreign.employment +
+    i.foreign.investment +
     i.freelance +
     i.royalty + Object.values(i.rent).reduce((a, b) => a + b, 0) + i.professional.medical + i.professional.other + i.contract.amount + i.business.amount
   return other > 0 ? 'PND90' : 'PND91'
@@ -139,6 +141,7 @@ export function documentChecklist(input: TaxInput, rules: TaxRules): DocItem[] {
     'หนังสือรับรองการจ่ายเงินปันผล/ดอกเบี้ย',
     'ขอจากบริษัทหลักทรัพย์ ศูนย์รับฝากหลักทรัพย์ (TSD) หรือธนาคาร ต้องมียอดเครดิตภาษีเงินปันผลระบุไว้',
   )
+  add(i.foreign.employment + i.foreign.investment > 0, 'foreign', 'หลักฐานเงินได้ต่างประเทศและการโอนเงินเข้าไทย', 'สเตตเมนต์โบรกเกอร์/นายจ้างต่างประเทศ หลักฐานการโอนเข้าไทย และหลักฐานภาษีที่เสียในต่างประเทศ (ถ้าจะขอเครดิต)')
   add(Object.values(i.rent).some((v) => v > 0), 'rent', 'สัญญาเช่าและหลักฐานรับค่าเช่า', 'ใช้ยืนยันรายได้ค่าเช่าทั้งปี')
   add(i.business.amount > 0 || i.contract.amount > 0, 'biz', 'บัญชีรายรับ-รายจ่ายของธุรกิจ', i.business.useActual || i.contract.useActual ? 'หักค่าใช้จ่ายตามจริง ต้องเก็บใบเสร็จ/ใบกำกับภาษีค่าใช้จ่ายทุกใบ' : 'แม้หักแบบเหมา ก็ควรมีบันทึกรายรับไว้')
   add(input.credits.prepaid > 0, 'pnd94', 'แบบ ภ.ง.ด.94 และใบเสร็จภาษีครึ่งปี', 'ใช้หักภาษีที่จ่ายไปแล้วตอนกลางปี')

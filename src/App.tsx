@@ -7,6 +7,7 @@ import { fetchRules, initialRules, type RulesState } from './lib/rules'
 import { readJSON, removeKey, writeJSON } from './lib/storage'
 import { Deductions } from './screens/Deductions'
 import { Filing } from './screens/Filing'
+import { HalfYear } from './screens/HalfYear'
 import { Market } from './screens/Market'
 import { Income } from './screens/Income'
 import { More } from './screens/More'
@@ -16,7 +17,7 @@ import { Art } from './components/Art'
 import { Assistant } from './components/Assistant'
 import { DisplaySettings } from './components/DisplaySettings'
 
-type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more' | 'filing' | 'market'
+type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more' | 'filing' | 'market' | 'halfyear'
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'summary', label: 'สรุป', icon: 'M4 19V9m6 10V5m6 14v-7m4 7H2' },
@@ -113,7 +114,8 @@ export default function App() {
   const screen = {
     summary: <Summary result={result} rules={rules} onStart={() => go('income')} onFiling={() => go('filing')} />,
     filing: <Filing input={state.input} result={result} rules={rules} onBack={() => go('summary')} />,
-    income: <Income input={state.input} update={update} rules={rules} result={result} />,
+    income: <Income input={state.input} update={update} rules={rules} result={result} onHalfYear={() => go('halfyear')} />,
+    halfyear: <HalfYear input={state.input} update={update} rules={rules} onBack={() => go('income')} />,
     deductions: <Deductions input={state.input} update={update} rules={rules} result={result} />,
     plan: <Plan input={state.input} rules={rules} result={result} onAdd={() => go('deductions')} onMarket={() => go('market')} />,
     market: <Market onBack={() => go('plan')} />,
@@ -141,7 +143,7 @@ export default function App() {
   }[tab]
 
   const balanceText = result.balance < 0 ? `ได้คืน ฿${fmt(-result.balance)}` : result.balance > 0 ? `จ่ายเพิ่ม ฿${fmt(result.balance)}` : 'ไม่ต้องจ่ายเพิ่ม'
-  const title = TABS.find((t) => t.id === tab)?.label ?? (tab === 'market' ? 'ตลาดหุ้น' : 'ยื่นภาษี')
+  const title = TABS.find((t) => t.id === tab)?.label ?? (tab === 'market' ? 'ตลาดหุ้น' : tab === 'halfyear' ? 'ภ.ง.ด.94' : 'ยื่นภาษี')
 
   return (
     <div className="min-h-full">

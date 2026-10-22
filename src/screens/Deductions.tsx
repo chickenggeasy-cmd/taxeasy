@@ -1,3 +1,4 @@
+import { SpouseCompare } from '../components/SpouseCompare'
 import { Disclosure, MoneyField, PageHero, Section, Segmented, Stepper, Toggle } from '../components/ui'
 import type { DeductionKey, TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
@@ -23,6 +24,8 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
     />
   )
 
+  const sp = input.spouse
+  const setSp = (k: Exclude<keyof TaxInput['spouse'], 'parents'>) => (v: number) => update((d) => void (d.spouse[k] = v))
   const kids = input.deductions.children
   const thisYear = rules.taxYear
 
@@ -46,6 +49,21 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
             checked={p.spouseHasIncome}
             onChange={(v) => update((d) => void (d.profile.spouseHasIncome = v))}
           />
+        )}
+        {p.married && p.spouseHasIncome && (
+          <Disclosure icon="family" title="ข้อมูลคู่สมรส" summary={sp.salary + sp.freelance ? `เงินได้ ${fmt(sp.salary + sp.freelance)} บาท · ใช้เทียบยื่นแยก/ยื่นรวม` : 'กรอกเพื่อเทียบยื่นแยก/ยื่นรวม'}>
+            <MoneyField id="sp-salary" label="เงินเดือน + โบนัสทั้งปีของคู่สมรส" value={sp.salary} onChange={setSp('salary')} />
+            <MoneyField id="sp-freelance" label="งานฟรีแลนซ์ 40(2) ของคู่สมรส" value={sp.freelance} onChange={setSp('freelance')} />
+            <MoneyField id="sp-withheld" label="ภาษีที่คู่สมรสถูกหัก ณ ที่จ่าย" value={sp.withheld} onChange={setSp('withheld')} />
+            <MoneyField id="sp-ss" label="ประกันสังคมของคู่สมรส" value={sp.socialSecurity} onChange={setSp('socialSecurity')} max={r.socialSecurity} />
+            <MoneyField id="sp-life" label="เบี้ยประกันชีวิตของคู่สมรส" value={sp.lifeInsurance} onChange={setSp('lifeInsurance')} />
+            <MoneyField id="sp-health" label="เบี้ยประกันสุขภาพของคู่สมรส" value={sp.healthInsurance} onChange={setSp('healthInsurance')} />
+            <MoneyField id="sp-pvd" label="PVD ของคู่สมรส" value={sp.pvd} onChange={setSp('pvd')} />
+            <MoneyField id="sp-rmf" label="RMF ของคู่สมรส" value={sp.rmf} onChange={setSp('rmf')} />
+            <MoneyField id="sp-esg" label="ThaiESG ของคู่สมรส" value={sp.thaiEsg} onChange={setSp('thaiEsg')} />
+            <Stepper label="บิดามารดาของคู่สมรสที่อุปการะ" value={sp.parents} max={2} onChange={(n) => update((d) => void (d.spouse.parents = n))} />
+            <SpouseCompare input={input} rules={rules} />
+          </Disclosure>
         )}
         <Toggle
           label="อายุ 65 ปีขึ้นไป หรือเป็นผู้พิการ"

@@ -53,7 +53,10 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     income.rent.vehicle * ex.rent.vehicle +
     income.rent.other * ex.rent.other
   const employmentGross = income.salary + income.freelance
+  const fx = income.foreign
+  // 40(1)(2) ในประเทศและค่าจ้างจากต่างประเทศ ใช้เพดานค่าใช้จ่ายร่วมกัน
   const employmentExpense = Math.min(employmentGross * ex.employment.rate, ex.employment.max)
+  const foreignEmploymentExpense = Math.min(fx.employment * ex.employment.rate, Math.max(0, ex.employment.max - employmentExpense))
   const flatOrActual = (part: { amount: number; useActual: boolean; actualExpense: number }, rate: number) =>
     part.useActual ? clamp(part.actualExpense, part.amount) : part.amount * rate
 
@@ -80,6 +83,8 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
       expense: income.professional.medical * ex.professional.medical + income.professional.other * ex.professional.other,
     },
     { id: '40-4', label: 'เงินปันผล/ดอกเบี้ย 40(4)', gross: investmentGross, expense: 0 },
+    { id: 'foreign-1', label: 'ค่าจ้างจากต่างประเทศที่นำเข้าไทย', gross: fx.employment, expense: foreignEmploymentExpense },
+    { id: 'foreign-4', label: 'เงินได้จากการลงทุนต่างประเทศที่นำเข้าไทย', gross: fx.investment, expense: 0 },
     { id: '40-7', label: 'รับเหมา 40(7)', gross: income.contract.amount, expense: flatOrActual(income.contract, ex.contract.rate) },
     { id: '40-8', label: 'ธุรกิจ/ค้าขาย/อื่น ๆ 40(8)', gross: income.business.amount, expense: flatOrActual(income.business, ex.business.rate) },
   ]
@@ -225,7 +230,8 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
 
   // 4) ภาษี: วิธีขั้นบันได เทียบกับวิธี 0.5% (ถ้าเข้าเงื่อนไข) แล้วใช้ยอดที่สูงกว่า
   const prog = progressiveTax(netIncome, rules)
-  const nonSalaryIncome = totalIncome - income.salary
+  // วิธี 0.5% คิดจากเงินได้ 40(2)–40(8) (ไม่รวมค่าจ้าง 40(1) ทั้งในและต่างประเทศ)
+  const nonSalaryIncome = totalIncome - income.salary - fx.employment
   let minimumTax: number | null = null
   if (nonSalaryIncome >= rules.minimumTax.incomeThreshold) {
     const m = round2(nonSalaryIncome * rules.minimumTax.rate)
@@ -233,7 +239,11 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   }
   const usedMinimumTax = minimumTax !== null && minimumTax > prog.tax
   const tax = usedMinimumTax ? minimumTax! : prog.tax
-  const credits = round2((input.credits.withheld || 0) + (input.credits.prepaid || 0) + dividendCredit + investmentWithheld)
+  // เครดิตภาษีต่างประเทศ: ไม่เกินภาษีไทยตามสัดส่วนของเงินได้จากต่างประเทศ
+  const foreignIncome = fx.employment + fx.investment
+  const foreignTaxCredit =
+    fx.hasTreaty && foreignIncome > 0 && totalIncome > 0 ? round2(Math.min(fx.taxPaid, (tax * foreignIncome) / totalIncome)) : 0
+  const credits = round2((input.credits.withheld || 0) + (input.credits.prepaid || 0) + dividendCredit + investmentWithheld + foreignTaxCredit)
 
   return {
     incomes,
@@ -251,6 +261,7 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     tax,
     dividendCredit,
     investmentWithheld,
+    foreignTaxCredit,
     credits,
     balance: round2(tax - credits),
     effectiveRate: totalIncome > 0 ? tax / totalIncome : 0,

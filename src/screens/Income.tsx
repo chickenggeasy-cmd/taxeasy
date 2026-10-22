@@ -1,37 +1,98 @@
 import { Disclosure, MoneyField, PageHero, Section, Segmented, Toggle } from '../components/ui'
 import { compareDividendChoice } from '../engine/plan'
+import { socialSecurityFromSalary, suggestedMonthlyWithholding } from '../engine/scenarios'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
 
 type Update = (fn: (draft: TaxInput) => void) => void
 
-export function Income({ input, update, rules, result }: { input: TaxInput; update: Update; rules: TaxRules; result: TaxResult }) {
+export function Income({ input, update, rules, result, onHalfYear }: { input: TaxInput; update: Update; rules: TaxRules; result: TaxResult; onHalfYear: () => void }) {
   const inc = input.income
   const ex = rules.expenses
   const expenseOf = (id: string) => result.incomes.find((l) => l.id === id)?.expense ?? 0
   const sumRent = Object.values(inc.rent).reduce((a, b) => a + b, 0)
   const inv = inc.investment
   const dividendChoice = compareDividendChoice(input, rules)
+  const mo = inc.monthly
+  const fx = inc.foreign
+  // โหมดรายเดือน: แปลงเป็นยอดทั้งปีทุกครั้งที่แก้
+  const setMonthly = (patch: Partial<typeof mo>) =>
+    update((d) => {
+      const m = { ...d.income.monthly, ...patch }
+      d.income.monthly = m
+      if (m.enabled) {
+        d.income.salary = m.salary * 12 + m.bonus
+        d.credits.withheld = m.withheld * 12
+      }
+    })
+  const otherCredits = result.credits - input.credits.withheld
+  const suggested = suggestedMonthlyWithholding(result, otherCredits)
   const balanceText = (b: number) => (b < 0 ? `ได้คืน ${fmt(-b)}` : b > 0 ? `จ่ายเพิ่ม ${fmt(b)}` : 'ไม่ต้องจ่ายเพิ่ม')
 
   return (
     <div className="anim-stagger flex flex-col gap-4">
       <PageHero art="income" title="รายได้ทั้งปี" subtitle="กรอกเฉพาะประเภทที่คุณมี แอปหักค่าใช้จ่ายตามกฎหมายให้เอง" />
-      <Section icon="salary" title="เงินเดือน" subtitle="ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้">
-        <MoneyField
-          id="salary"
-          label="เงินเดือน + โบนัส ทั้งปี 40(1)"
-          value={inc.salary}
-          onChange={(v) => update((d) => void (d.income.salary = v))}
-          hint={`หักค่าใช้จ่ายได้ ${pct(ex.employment.rate)} ไม่เกิน ${fmt(ex.employment.max)} บาท (รวมกับ 40(2))`}
+      <Section icon="salary" title="เงินเดือน" subtitle={mo.enabled ? 'กรอกยอดต่อเดือน แอปคาดการณ์ทั้งปีให้' : 'ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้'}>
+        <Segmented
+          label="วิธีกรอกเงินเดือน"
+          value={mo.enabled ? 'monthly' : 'annual'}
+          options={[
+            { value: 'annual', label: 'ยอดทั้งปี' },
+            { value: 'monthly', label: 'รายเดือน' },
+          ]}
+          onChange={(v) =>
+            setMonthly(
+              v === 'monthly'
+                ? { enabled: true, salary: mo.salary || Math.round(inc.salary / 12), withheld: mo.withheld || Math.round(input.credits.withheld / 12) }
+                : { enabled: false },
+            )
+          }
         />
-        <MoneyField
-          id="withheld"
-          label="ภาษีที่ถูกหัก ณ ที่จ่ายทั้งปี"
-          value={input.credits.withheld}
-          onChange={(v) => update((d) => void (d.credits.withheld = v))}
-          hint="รวมทุกใบ 50 ทวิ ทั้งจากงานประจำและงานฟรีแลนซ์"
-        />
+        {mo.enabled ? (
+          <>
+            <MoneyField id="m-salary" label="เงินเดือนต่อเดือน" value={mo.salary} onChange={(v) => setMonthly({ salary: v })} />
+            <MoneyField id="m-bonus" label="โบนัสทั้งปี (ถ้ามี)" value={mo.bonus} onChange={(v) => setMonthly({ bonus: v })} />
+            <MoneyField id="m-withheld" label="ภาษีที่ถูกหักต่อเดือน" value={mo.withheld} onChange={(v) => setMonthly({ withheld: v })} hint="ดูในสลิปเงินเดือน" />
+            <div className="rounded-2xl bg-paper p-3 text-sm">
+              <p className="num">
+                คาดการณ์ทั้งปี: เงินเดือน + โบนัส <b>{fmt(inc.salary)}</b> บาท · ถูกหักภาษี <b>{fmt(input.credits.withheld)}</b> บาท
+              </p>
+              {result.tax > 0 && (
+                <p className={`num mt-1 ${mo.withheld < suggested * 0.9 ? 'text-due' : 'text-refund'}`}>
+                  {mo.withheld < suggested * 0.9
+                    ? `บริษัทควรหักประมาณเดือนละ ${fmt(suggested)} บาท ถ้าหักเท่าเดิม สิ้นปีอาจต้องจ่ายเพิ่ม`
+                    : `ภาษีที่ถูกหักต่อเดือนเหมาะสมแล้ว (ควรหักประมาณ ${fmt(suggested)} บาท)`}
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <MoneyField
+              id="salary"
+              label="เงินเดือน + โบนัส ทั้งปี 40(1)"
+              value={inc.salary}
+              onChange={(v) => update((d) => void (d.income.salary = v))}
+              hint={`หักค่าใช้จ่ายได้ ${pct(ex.employment.rate)} ไม่เกิน ${fmt(ex.employment.max)} บาท (รวมกับ 40(2))`}
+            />
+            <MoneyField
+              id="withheld"
+              label="ภาษีที่ถูกหัก ณ ที่จ่ายทั้งปี"
+              value={input.credits.withheld}
+              onChange={(v) => update((d) => void (d.credits.withheld = v))}
+              hint="รวมทุกใบ 50 ทวิ ทั้งจากงานประจำและงานฟรีแลนซ์"
+            />
+          </>
+        )}
+        {inc.salary > 0 && input.deductions.socialSecurity === 0 && (
+          <button
+            type="button"
+            onClick={() => update((d) => void (d.deductions.socialSecurity = socialSecurityFromSalary(mo.enabled ? mo.salary : inc.salary / 12, rules)))}
+            className="self-start rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent"
+          >
+            คำนวณเงินสมทบประกันสังคมให้ ({fmt(socialSecurityFromSalary(mo.enabled ? mo.salary : inc.salary / 12, rules))} บาท/ปี)
+          </button>
+        )}
       </Section>
 
       <Section icon="coins" title="รายได้อื่น" subtitle="เปิดเฉพาะประเภทที่คุณมี">
@@ -194,7 +255,50 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
             />
           )}
           <p className="rounded-xl bg-paper px-3 py-2 text-sm text-muted">
-            กำไรจากการขายหุ้นไทยในตลาดหลักทรัพย์ได้รับยกเว้นภาษี ไม่ต้องกรอก ส่วนเงินได้จากหุ้นต่างประเทศที่นำเข้าไทยตั้งแต่ปี 2567 ต้องเสียภาษี แอปยังไม่คำนวณส่วนนี้
+            กำไรจากการขายหุ้นไทยในตลาดหลักทรัพย์ได้รับยกเว้นภาษี ไม่ต้องกรอก ส่วนเงินได้จากหุ้นต่างประเทศ กรอกในหัวข้อ “เงินได้จากต่างประเทศ” ด้านล่าง
+          </p>
+        </Disclosure>
+
+        <Disclosure
+          icon="send"
+          title="เงินได้จากต่างประเทศ"
+          summary={fx.employment + fx.investment ? `${fmt(fx.employment + fx.investment)} บาท` : 'ไม่มี'}
+        >
+          <p className="rounded-xl bg-paper px-3 py-2 text-sm">
+            ผู้ที่อยู่ในไทยตั้งแต่ 180 วันในปีนั้น ต้องนำเงินได้จากต่างประเทศที่<b>เกิดตั้งแต่ปี 2567</b> มาเสียภาษีใน<b>ปีที่นำเงินเข้าไทย</b> (คำสั่งกรมสรรพากร ป.161/2566) กรอกเฉพาะยอดที่นำเข้าไทยในปีภาษี {rules.taxYear}
+          </p>
+          <MoneyField
+            id="fx-employment"
+            label="ค่าจ้าง/เงินเดือนจากงานในต่างประเทศ ที่นำเข้าไทย"
+            value={fx.employment}
+            onChange={(v) => update((d) => void (d.income.foreign.employment = v))}
+            hint="หักค่าใช้จ่าย 50% ร่วมเพดานกับเงินเดือนในไทย"
+          />
+          <MoneyField
+            id="fx-investment"
+            label="ปันผล ดอกเบี้ย กำไรจากหุ้น/กองทุนต่างประเทศ ที่นำเข้าไทย"
+            value={fx.investment}
+            onChange={(v) => update((d) => void (d.income.foreign.investment = v))}
+            hint="ไม่มีการหักค่าใช้จ่าย กำไรจากการขายคิดจากส่วนกำไร ไม่ใช่เงินต้น"
+          />
+          {fx.employment + fx.investment > 0 && (
+            <>
+              <MoneyField
+                id="fx-tax"
+                label="ภาษีที่เสียในต่างประเทศแล้ว"
+                value={fx.taxPaid}
+                onChange={(v) => update((d) => void (d.income.foreign.taxPaid = v))}
+              />
+              <Toggle
+                label="ประเทศนั้นมีอนุสัญญาภาษีซ้อนกับไทย"
+                hint={fx.hasTreaty ? `เครดิตภาษีได้ ${fmt(result.foreignTaxCredit)} บาท (ไม่เกินภาษีไทยของเงินได้ส่วนนี้)` : 'เช่น สหรัฐฯ ญี่ปุ่น สิงคโปร์ อังกฤษ ถ้ามีจะนำภาษีที่เสียแล้วมาหักได้'}
+                checked={fx.hasTreaty}
+                onChange={(v) => update((d) => void (d.income.foreign.hasTreaty = v))}
+              />
+            </>
+          )}
+          <p className="text-xs text-muted">
+            ปี 2568 กรมสรรพากรเสนอยกเว้นภาษีถ้านำเงินเข้าไทยภายในปีที่ได้รับหรือปีถัดไป ตอนนี้ยังไม่พบประกาศบังคับใช้ ตรวจสอบประกาศล่าสุดก่อนยื่น
           </p>
         </Disclosure>
       </Section>
@@ -207,6 +311,9 @@ export function Income({ input, update, rules, result }: { input: TaxInput; upda
           onChange={(v) => update((d) => void (d.credits.prepaid = v))}
           hint="สำหรับผู้มีรายได้ 40(5)–40(8) ที่ยื่นภาษีกลางปี"
         />
+        <button type="button" onClick={onHalfYear} className="self-start rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent">
+          คำนวณ ภ.ง.ด.94 ครึ่งปี →
+        </button>
       </Section>
     </div>
   )

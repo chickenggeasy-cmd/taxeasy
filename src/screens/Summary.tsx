@@ -160,8 +160,9 @@ export function Summary({ result, rules, compact = false, onStart, onFiling }: {
           <Row label="ภาษีตามขั้นบันได" value={result.progressiveTax} />
           {result.minimumTax !== null && <Row label="ภาษีวิธี 0.5% ของเงินได้ (40(2)–40(8))" value={result.minimumTax} />}
           {result.usedMinimumTax && <p className="text-sm text-due">วิธี 0.5% ได้ยอดสูงกว่า กฎหมายให้ใช้ยอดที่สูงกว่า</p>}
-          <Row sign="−" label="ภาษีหัก ณ ที่จ่าย / ชำระแล้ว" value={result.credits - result.dividendCredit} />
+          <Row sign="−" label="ภาษีหัก ณ ที่จ่าย / ชำระแล้ว" value={result.credits - result.dividendCredit - result.foreignTaxCredit} />
           {result.dividendCredit > 0 && <Row sign="−" label="เครดิตภาษีเงินปันผล" value={result.dividendCredit} />}
+          {result.foreignTaxCredit > 0 && <Row sign="−" label="เครดิตภาษีที่เสียในต่างประเทศ" value={result.foreignTaxCredit} />}
           <div className="my-1 border-t border-dashed border-line" />
           <Row label={result.balance < 0 ? 'ได้คืน' : 'จ่ายเพิ่ม'} value={Math.abs(result.balance)} strong />
         </div>

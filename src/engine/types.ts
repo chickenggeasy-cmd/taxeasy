@@ -110,6 +110,19 @@ export interface TaxInput {
       interest: number
       includeInterest: boolean
     }
+    /** เงินได้จากต่างประเทศที่เกิดตั้งแต่ปี 2567 และนำเข้าไทยในปีภาษีนี้ (ป.161/2566) */
+    foreign: {
+      /** ค่าจ้างจากการทำงานในต่างประเทศ (40(1)) */
+      employment: number
+      /** เงินปันผล ดอกเบี้ย กำไรจากการขายหุ้นต่างประเทศ (40(4)) */
+      investment: number
+      /** ภาษีที่เสียไปแล้วในต่างประเทศ */
+      taxPaid: number
+      /** ประเทศนั้นมีอนุสัญญาภาษีซ้อนกับไทย (นำภาษีที่เสียแล้วมาเครดิตได้) */
+      hasTreaty: boolean
+    }
+    /** กรอกเงินเดือนแบบรายเดือน (ใช้ในหน้าจอ แอปแปลงเป็นยอดทั้งปีให้) */
+    monthly: { enabled: boolean; salary: number; bonus: number; withheld: number }
   }
   deductions: {
     /** ปีเกิดของบุตรแต่ละคน (พ.ศ.) เรียงตามลำดับการเกิด */
@@ -138,6 +151,31 @@ export interface TaxInput {
   }
   /** measureId → inputId → ยอดที่จ่ายจริง */
   measures: Record<string, Record<string, number>>
+  /** ข้อมูลคู่สมรสที่มีเงินได้ ใช้เทียบยื่นแยก/ยื่นรวม */
+  spouse: {
+    salary: number
+    freelance: number
+    withheld: number
+    socialSecurity: number
+    lifeInsurance: number
+    healthInsurance: number
+    pvd: number
+    rmf: number
+    thaiEsg: number
+    parents: number
+  }
+  /** เงินได้และค่าลดหย่อนช่วง ม.ค.–มิ.ย. สำหรับคำนวณ ภ.ง.ด.94 */
+  halfYear: {
+    rent: number
+    professional: number
+    contract: number
+    business: number
+    lifeInsurance: number
+    healthInsurance: number
+    rmf: number
+    thaiEsg: number
+    homeLoanInterest: number
+  }
   credits: {
     /** ภาษีหัก ณ ที่จ่ายตาม 50 ทวิ */
     withheld: number
@@ -192,6 +230,8 @@ export interface TaxResult {
   dividendCredit: number
   /** ภาษีที่ถูกหักจากเงินปันผล/ดอกเบี้ยที่นำมารวมคำนวณ */
   investmentWithheld: number
+  /** เครดิตภาษีที่เสียในต่างประเทศ (ตามอนุสัญญาภาษีซ้อน) */
+  foreignTaxCredit: number
   credits: number
   /** บวก = ต้องจ่ายเพิ่ม, ลบ = ได้คืน */
   balance: number
