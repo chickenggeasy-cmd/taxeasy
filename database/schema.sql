@@ -51,3 +51,10 @@ CREATE TABLE IF NOT EXISTS chat_usage (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_client_time (client_hash, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ข้อมูลตลาดหุ้นที่ดึงมาแล้ว เก็บไว้ชั่วคราวเพื่อไม่ให้เรียกผู้ให้บริการบ่อยเกินไป (api/market.php สร้างให้เองถ้ายังไม่มี)
+CREATE TABLE IF NOT EXISTS market_cache (
+  cache_key VARCHAR(40) PRIMARY KEY,
+  payload MEDIUMTEXT NOT NULL,
+  fetched_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
