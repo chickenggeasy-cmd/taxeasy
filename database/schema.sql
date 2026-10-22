@@ -58,3 +58,12 @@ CREATE TABLE IF NOT EXISTS market_cache (
   payload MEDIUMTEXT NOT NULL,
   fetched_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- บันทึกการเข้าสู่ระบบหลังบ้าน ใช้จำกัดการเดารหัสผ่านตาม IP (admin สร้างให้เองถ้ายังไม่มี)
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ip_hash CHAR(64) NOT NULL,
+  success TINYINT(1) NOT NULL DEFAULT 0,
+  attempted_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_ip_time (ip_hash, attempted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
