@@ -53,3 +53,30 @@ function published_rules(): array
     )->fetchAll();
     return array_map(fn($r) => json_decode($r['rules_json'], true), $rows);
 }
+
+/** ตารางเรื่องที่ผู้ใช้แจ้งเข้ามา (สร้างให้เองถ้ายังไม่มี) */
+function ensure_feedback_table(): void
+{
+    db()->exec("CREATE TABLE IF NOT EXISTS feedback (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        category ENUM('wrong_number', 'bug', 'idea', 'other') NOT NULL,
+        message TEXT NOT NULL,
+        contact VARCHAR(200) NOT NULL DEFAULT '',
+        tax_year SMALLINT UNSIGNED NULL,
+        rules_revision INT UNSIGNED NULL,
+        calc_summary TEXT NULL,
+        page VARCHAR(30) NOT NULL DEFAULT '',
+        client_hash CHAR(64) NOT NULL,
+        status ENUM('new', 'done') NOT NULL DEFAULT 'new',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_status (status, created_at),
+        KEY idx_client_time (client_hash, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+const FEEDBACK_CATEGORIES = [
+    'wrong_number' => 'ตัวเลขไม่ตรง',
+    'bug' => 'ใช้งานไม่ได้',
+    'idea' => 'อยากให้เพิ่ม',
+    'other' => 'อื่น ๆ',
+];
