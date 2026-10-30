@@ -22,6 +22,8 @@ export function More({
   onReset,
   onExample,
   onFiling,
+  onPrivacy,
+  onFeedback,
 }: {
   rules: TaxRules
   rulesState: RulesState
@@ -33,6 +35,8 @@ export function More({
   onReset: () => void
   onExample: () => void
   onFiling: () => void
+  onPrivacy: () => void
+  onFeedback: () => void
 }) {
   const [confirmReset, setConfirmReset] = useState(false)
   const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -93,7 +97,7 @@ export function More({
         </button>
       </Section>
 
-      <Section icon="lock" title="ข้อมูลของคุณ" subtitle="เก็บไว้ในเครื่องนี้เท่านั้น ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
+      <Section icon="lock" title="ข้อมูลของคุณ" subtitle="ตัวเลขที่กรอกเก็บไว้ในเครื่องนี้ ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
         {!__PREVIEW__ && (
         <div className="flex flex-col gap-2 rounded-2xl bg-paper p-3">
           <p className="text-sm">
@@ -154,6 +158,25 @@ export function More({
               </button>
             </span>
           )}
+        </div>
+      </Section>
+
+      <Section icon="bulb" title="ช่วยเหลือ" subtitle="เจอปัญหา หรืออยากรู้ว่าข้อมูลถูกส่งไปไหน">
+        <div className="flex flex-col divide-y divide-line">
+          {[
+            { label: 'แจ้งปัญหา / ข้อเสนอแนะ', hint: 'ตัวเลขไม่ตรง ใช้งานไม่ได้ หรืออยากให้เพิ่มอะไร', onClick: onFeedback },
+            { label: 'นโยบายความเป็นส่วนตัว', hint: 'ข้อมูลอยู่ที่ไหน ส่งไปไหน และวิธีลบ', onClick: onPrivacy },
+          ].map((r) => (
+            <button key={r.label} type="button" onClick={r.onClick} className="flex items-center gap-3 py-3 text-left">
+              <span className="min-w-0 flex-1">
+                <span className="block font-semibold">{r.label}</span>
+                <span className="block text-sm text-muted">{r.hint}</span>
+              </span>
+              <span aria-hidden className="text-xl text-muted">
+                →
+              </span>
+            </button>
+          ))}
         </div>
       </Section>
 

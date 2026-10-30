@@ -148,7 +148,13 @@ function page_start(string $title): void
     echo '<title>' . h($title) . ' · หลังบ้านภาษีง่ายๆ</title><link rel="stylesheet" href="admin.css"></head><body>';
     echo '<header class="top"><a class="brand" href="index.php"><img src="../icons/icon.svg" alt="" width="32" height="32">หลังบ้านภาษีง่ายๆ</a>';
     if (admin_id() !== null) {
-        echo '<nav><a href="index.php">กฎภาษี</a><a href="admins.php">ผู้ดูแล</a><a href="backup.php">สำรองข้อมูล</a><a href="account.php">บัญชีของฉัน (' . h(admin_name()) . ')</a><a href="../" target="_blank">เปิดแอป</a><form method="post" action="logout.php">' . csrf_field() . '<button class="link">ออกจากระบบ</button></form></nav>';
+        $newFeedback = 0;
+        try {
+            ensure_feedback_table();
+            $newFeedback = (int) db()->query("SELECT COUNT(*) FROM feedback WHERE status = 'new'")->fetchColumn();
+        } catch (Throwable $e) {
+        }
+        echo '<nav><a href="index.php">กฎภาษี</a><a href="feedback.php">แจ้งปัญหา' . ($newFeedback ? ' <span class="pill draft">' . $newFeedback . '</span>' : '') . '</a><a href="admins.php">ผู้ดูแล</a><a href="backup.php">สำรองข้อมูล</a><a href="account.php">บัญชีของฉัน (' . h(admin_name()) . ')</a><a href="../" target="_blank">เปิดแอป</a><form method="post" action="logout.php">' . csrf_field() . '<button class="link">ออกจากระบบ</button></form></nav>';
     }
     echo '</header><main>';
     if ($f) echo '<p class="flash ' . h($f[0]) . '">' . h($f[1]) . '</p>';

@@ -117,6 +117,8 @@ try {
 
 db()->prepare('INSERT INTO chat_usage (client_hash, input_tokens, output_tokens) VALUES (?, ?, ?)')
     ->execute([$clientHash, $message->usage->inputTokens + (int) $message->usage->cacheReadInputTokens + (int) $message->usage->cacheCreationInputTokens, $message->usage->outputTokens]);
+// เก็บสถิติการใช้งานไม่เกิน 90 วัน ตามที่แจ้งไว้ในนโยบายความเป็นส่วนตัว
+db()->exec('DELETE FROM chat_usage WHERE created_at < NOW() - INTERVAL 90 DAY');
 
 if ($message->stopReason === 'refusal') {
     json_response(['ok' => false, 'error' => 'อ่านเอกสารนี้ไม่ได้ กรอกตัวเลขเองได้เลย'], 422);

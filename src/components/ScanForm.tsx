@@ -10,7 +10,7 @@ type Update = (fn: (draft: TaxInput) => void) => void
 type Fields = Pick<ScanResult, 'salary' | 'withheld' | 'socialSecurity' | 'providentFund'>
 
 /** ถ่ายรูป 50 ทวิ ให้ AI อ่านตัวเลข แล้วให้ผู้ใช้ตรวจก่อนใส่ */
-export function ScanForm({ input, rules, update }: { input: TaxInput; rules: TaxRules; update: Update }) {
+export function ScanForm({ input, rules, update, onPrivacy }: { input: TaxInput; rules: TaxRules; update: Update; onPrivacy: () => void }) {
   const [available, setAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -143,7 +143,12 @@ export function ScanForm({ input, rules, update }: { input: TaxInput; rules: Tax
           </div>
         </div>
       )}
-      <p className="text-xs text-muted">รูปถูกส่งให้ AI อ่านแล้วทิ้ง ไม่เก็บไว้บนเซิร์ฟเวอร์ ตรวจตัวเลขกับเอกสารจริงทุกครั้ง</p>
+      <p className="text-xs text-muted">
+        รูปถูกส่งให้ AI อ่านแล้วทิ้ง ไม่เก็บไว้บนเซิร์ฟเวอร์ ปิดชื่อและเลขประจำตัวก่อนถ่ายได้ ตรวจตัวเลขกับเอกสารจริงทุกครั้ง{' '}
+        <button type="button" onClick={onPrivacy} className="font-semibold text-accent underline">
+          ความเป็นส่วนตัว
+        </button>
+      </p>
     </div>
   )
 }

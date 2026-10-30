@@ -30,7 +30,7 @@ function MascotSvg({ size }: { size: number }) {
   )
 }
 
-export function Assistant({ input, result, rules, raised }: { input: TaxInput; result: TaxResult; rules: TaxRules; raised: boolean }) {
+export function Assistant({ input, result, rules, raised, onPrivacy }: { input: TaxInput; result: TaxResult; rules: TaxRules; raised: boolean; onPrivacy: () => void }) {
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<AssistantStatus>('checking')
   const [consent, setConsent] = useState<boolean | null>(() => readJSON<boolean>(CONSENT_KEY))
@@ -133,7 +133,17 @@ export function Assistant({ input, result, rules, raised }: { input: TaxInput; r
                 <div className="flex flex-col gap-3 rounded-2xl bg-accent-soft p-4">
                   <p className="font-semibold">ให้น้องภาษีดูตัวเลขภาษีของคุณไหม</p>
                   <p className="text-sm">
-                    ถ้าอนุญาต แอปจะส่งสรุปรายได้ ค่าลดหย่อน และผลคำนวณไปพร้อมคำถาม เพื่อให้ตอบตรงกับคุณ ไม่มีชื่อหรือเลขบัตรประชาชน เปลี่ยนใจได้ทุกเมื่อ
+                    ถ้าอนุญาต แอปจะส่งสรุปรายได้ ค่าลดหย่อน และผลคำนวณไปพร้อมคำถาม เพื่อให้ตอบตรงกับคุณ ไม่มีชื่อหรือเลขบัตรประชาชน เปลี่ยนใจได้ทุกเมื่อ{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false)
+                        onPrivacy()
+                      }}
+                      className="font-semibold text-accent underline"
+                    >
+                      ข้อมูลถูกส่งไปไหน
+                    </button>
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" onClick={() => chooseConsent(true)} className="rounded-xl bg-accent px-4 py-2 font-semibold text-accent-ink">

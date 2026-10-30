@@ -110,7 +110,21 @@ function SectionTitle({ icon, title, subtitle }: { icon: IconName; title: string
   )
 }
 
-export function Summary({ result, rules, compact = false, onStart, onFiling }: { result: TaxResult; rules: TaxRules; compact?: boolean; onStart?: () => void; onFiling?: () => void }) {
+export function Summary({
+  result,
+  rules,
+  compact = false,
+  onStart,
+  onFiling,
+  onFeedback,
+}: {
+  result: TaxResult
+  rules: TaxRules
+  compact?: boolean
+  onStart?: () => void
+  onFiling?: () => void
+  onFeedback?: () => void
+}) {
   const online = daysUntil(rules.filingDeadlines.online)
   const [sharing, setSharing] = useState(false)
   if (result.totalIncome === 0 && onStart) {
@@ -170,6 +184,11 @@ export function Summary({ result, rules, compact = false, onStart, onFiling }: {
           <div className="my-1 border-t border-dashed border-line" />
           <Row label={result.balance < 0 ? 'ได้คืน' : 'จ่ายเพิ่ม'} value={Math.abs(result.balance)} strong />
         </div>
+        {onFeedback && !__PREVIEW__ && (
+          <button type="button" onClick={onFeedback} className="mt-2 text-sm font-semibold text-accent">
+            ตัวเลขไม่ตรงกับที่ยื่นจริง? แจ้งเรา →
+          </button>
+        )}
       </section>
 
       {!compact && (

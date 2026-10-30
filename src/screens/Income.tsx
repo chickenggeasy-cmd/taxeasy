@@ -7,7 +7,21 @@ import { fmt, pct } from '../lib/format'
 
 type Update = (fn: (draft: TaxInput) => void) => void
 
-export function Income({ input, update, rules, result, onHalfYear }: { input: TaxInput; update: Update; rules: TaxRules; result: TaxResult; onHalfYear: () => void }) {
+export function Income({
+  input,
+  update,
+  rules,
+  result,
+  onHalfYear,
+  onPrivacy,
+}: {
+  input: TaxInput
+  update: Update
+  rules: TaxRules
+  result: TaxResult
+  onHalfYear: () => void
+  onPrivacy: () => void
+}) {
   const inc = input.income
   const ex = rules.expenses
   const expenseOf = (id: string) => result.incomes.find((l) => l.id === id)?.expense ?? 0
@@ -34,7 +48,7 @@ export function Income({ input, update, rules, result, onHalfYear }: { input: Ta
     <div className="anim-stagger flex flex-col gap-4">
       <PageHero art="income" title="รายได้ทั้งปี" subtitle="กรอกเฉพาะประเภทที่คุณมี แอปหักค่าใช้จ่ายตามกฎหมายให้เอง" />
       <Section icon="salary" title="เงินเดือน" subtitle={mo.enabled ? 'กรอกยอดต่อเดือน แอปคาดการณ์ทั้งปีให้' : 'ดูยอดได้จากหนังสือรับรอง 50 ทวิ ที่บริษัทออกให้'}>
-        {!__PREVIEW__ && <ScanForm input={input} rules={rules} update={update} />}
+        {!__PREVIEW__ && <ScanForm input={input} rules={rules} update={update} onPrivacy={onPrivacy} />}
         <Segmented
           label="วิธีกรอกเงินเดือน"
           value={mo.enabled ? 'monthly' : 'annual'}
