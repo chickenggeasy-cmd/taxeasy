@@ -140,7 +140,7 @@ export function Summary({ result, rules, compact = false, onStart, onFiling }: {
           <div className="min-w-0">
             <p className="text-xs text-muted">อัตราภาษีจริง</p>
             <p className="num font-display text-[1.7rem] leading-tight font-semibold">{pct(result.effectiveRate)}</p>
-            <p className="num truncate text-xs text-muted">ของเงินได้ {fmt(result.totalIncome)}</p>
+            <p className="num text-xs text-muted">ของเงินได้ {fmt(result.totalIncome)}</p>
           </div>
         </div>
       </div>

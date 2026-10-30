@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { calculateTax } from './engine/calculate'
 import { emptyInput, mergeInput } from './engine/defaults'
-import type { TaxInput, TaxRules } from './engine/types'
+import { EXAMPLE_IDS, EXAMPLES, type ExampleId } from './engine/examples'
+import type { TaxInput } from './engine/types'
 import { defaultTaxYear, fmt } from './lib/format'
 import { fetchRules, initialRules, type RulesState } from './lib/rules'
 import { readJSON, removeKey, writeJSON } from './lib/storage'
@@ -29,18 +30,6 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const inputKey = (year: number) => `taxeasy:input:${year}`
 
-function exampleInput(year: number, rules: TaxRules): TaxInput {
-  const i = emptyInput()
-  i.income.salary = 720_000
-  i.credits.withheld = 26_000
-  i.deductions.socialSecurity = rules.deductions.socialSecurity
-  i.deductions.lifeInsurance = 30_000
-  i.deductions.rmf = 50_000
-  i.deductions.parents = 1
-  i.deductions.children = [year - 6]
-  return i
-}
-
 function pickYear(years: number[]): number {
   const saved = readJSON<number>('taxeasy:year')
   if (saved && years.includes(saved)) return saved
@@ -63,9 +52,9 @@ export default function App() {
   const [year, setYear] = useState(() => pickYear(years))
   const rules = rulesState.byYear[year] ?? rulesState.byYear[years[years.length - 1]]
 
-  const loadInput = (y: number) => {
+  const loadInput = (y: number): { input: TaxInput; example: ExampleId | false } => {
     const saved = readJSON<TaxInput>(inputKey(y))
-    return saved ? { input: mergeInput(saved), example: false } : { input: exampleInput(y, rulesState.byYear[y] ?? rules), example: true }
+    return saved ? { input: mergeInput(saved), example: false } : { input: EXAMPLES.salary.build(y, rulesState.byYear[y] ?? rules), example: 'salary' as ExampleId | false }
   }
   const [state, setState] = useState(() => loadInput(year))
   const [tab, setTab] = useState<Tab>(() => readJSON<Tab>('taxeasy:tab') ?? 'summary')
@@ -135,7 +124,7 @@ export default function App() {
         onFiling={() => go('filing')}
         onExample={() => {
           removeKey(inputKey(year))
-          setState({ input: exampleInput(year, rules), example: true })
+          setState({ input: EXAMPLES.salary.build(year, rules), example: 'salary' })
           go('summary')
         }}
       />
@@ -186,18 +175,35 @@ export default function App() {
                 <p className="min-w-0 text-[15px]">
                   <span className="mb-1 inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">ข้อมูลตัวอย่าง</span>
                   <b className="block font-display text-lg">ลองดูว่าภาษีง่ายๆ คำนวณให้คุณยังไง</b>
-                  <span className="block text-sm text-muted">มนุษย์เงินเดือน 60,000 บาท/เดือน มีลูก 1 คน ดูแลแม่ 1 คน</span>
+                  <span className="block text-sm text-muted">{EXAMPLES[state.example].desc}</span>
                 </p>
                 <button type="button" onClick={startFresh} className="shrink-0 rounded-2xl bg-accent px-5 py-2.5 font-semibold text-accent-ink shadow-md">
                   เริ่มกรอกของฉัน
                 </button>
+              </div>
+              <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
+                <span className="text-xs font-semibold text-muted">ลองตัวอย่างอื่น</span>
+                <div role="radiogroup" aria-label="เลือกข้อมูลตัวอย่าง" className="flex flex-wrap gap-2">
+                  {EXAMPLE_IDS.map((id) => (
+                    <button
+                      key={id}
+                      type="button"
+                      role="radio"
+                      aria-checked={state.example === id}
+                      onClick={() => setState({ input: EXAMPLES[id].build(year, rules), example: id })}
+                      className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors ${state.example === id ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink'}`}
+                    >
+                      {EXAMPLES[id].label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
           {state.example && tab !== 'summary' && (
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-accent/60 bg-accent-soft/50 px-4 py-2.5">
               <p className="min-w-0 text-sm">
-                <b className="text-accent">ข้อมูลตัวอย่าง</b> <span className="text-muted">ลองแก้ตัวเลขดูได้เลย</span>
+                <b className="text-accent">ข้อมูลตัวอย่าง · {EXAMPLES[state.example].label}</b> <span className="text-muted">ลองแก้ตัวเลขดูได้เลย</span>
               </p>
               <button type="button" onClick={startFresh} className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-sm font-semibold text-accent-ink">
                 เริ่มกรอกของฉัน
