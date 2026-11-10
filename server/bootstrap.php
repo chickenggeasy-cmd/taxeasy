@@ -42,6 +42,23 @@ function h(?string $s): string
     return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
 }
 
+/** เกณฑ์เงินได้ที่ต้องยื่นแบบ ตามประมวลรัษฎากร มาตรา 56 (ค่าเดียวกับ DEFAULT_FILING_THRESHOLDS ใน src/lib/filing.ts) */
+const DEFAULT_FILING_THRESHOLDS = [
+    'single' => ['salaryOnly' => 120000, 'other' => 60000],
+    'married' => ['salaryOnly' => 220000, 'other' => 120000],
+];
+
+/** เติมช่องที่กฎฉบับเก่ายังไม่มี เพื่อให้แอป น้องภาษี และหน้าแก้กฎเห็นค่าเดียวกัน */
+function with_rule_defaults(array $rules): array
+{
+    $t = is_array($rules['filingThresholds'] ?? null) ? $rules['filingThresholds'] : [];
+    foreach (DEFAULT_FILING_THRESHOLDS as $group => $defaults) {
+        $t[$group] = (is_array($t[$group] ?? null) ? $t[$group] : []) + $defaults;
+    }
+    $rules['filingThresholds'] = $t;
+    return $rules;
+}
+
 /** กฎฉบับที่ใช้งานอยู่ (published ล่าสุด) ของทุกปี */
 function published_rules(): array
 {
@@ -51,7 +68,7 @@ function published_rules(): array
            ON p.tax_year = r.tax_year AND p.rev = r.revision
          ORDER BY r.tax_year"
     )->fetchAll();
-    return array_map(fn($r) => json_decode($r['rules_json'], true), $rows);
+    return array_map(fn($r) => with_rule_defaults((array) json_decode($r['rules_json'], true)), $rows);
 }
 
 /** ตารางเรื่องที่ผู้ใช้แจ้งเข้ามา (สร้างให้เองถ้ายังไม่มี) */
