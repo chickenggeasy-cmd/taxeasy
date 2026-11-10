@@ -1,4 +1,5 @@
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
+import { filingRequirement } from './filing'
 import { fmt, pct } from './format'
 import { NO_PHP_MESSAGE, readApiJson } from './server'
 
@@ -61,6 +62,8 @@ export function buildContext(input: TaxInput, result: TaxResult, rules: TaxRules
     lines.push(`คู่สมรสมีเงินได้ ${fmt(input.spouse.salary + input.spouse.freelance)} บาท (ใช้เทียบยื่นแยก/ยื่นรวมในแอป)`)
   }
   if (input.deductions.children.length) lines.push(`บุตรเกิดปี: ${input.deductions.children.join(', ')}`)
+  const filing = filingRequirement(input, result, rules)
+  if (filing) lines.push(`การยื่นแบบ: ${filing.title} (${filing.reason})`)
   return lines.join('\n')
 }
 

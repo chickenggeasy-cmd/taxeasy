@@ -1,4 +1,5 @@
-import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
+import type { FilingThresholds, TaxInput, TaxResult, TaxRules } from '../engine/types'
+import { fmt } from './format'
 
 export type FormType = 'PND91' | 'PND90'
 
@@ -162,4 +163,70 @@ export function documentChecklist(input: TaxInput, rules: TaxRules): DocItem[] {
   }
   add(true, 'promptpay', 'ผูกพร้อมเพย์กับเลขบัตรประชาชน', 'กรมสรรพากรคืนเงินภาษีผ่านพร้อมเพย์ที่ผูกกับเลขบัตรประชาชนเท่านั้น')
   return docs
+}
+
+/** เกณฑ์ตามประมวลรัษฎากร มาตรา 56 ใช้เมื่อกฎภาษีฉบับเก่าไม่มี filingThresholds (ค่าเดียวกับ server/bootstrap.php) */
+export const DEFAULT_FILING_THRESHOLDS: FilingThresholds = {
+  single: { salaryOnly: 120_000, other: 60_000 },
+  married: { salaryOnly: 220_000, other: 120_000 },
+}
+
+export interface FilingRequirement {
+  /** required = กฎหมายบังคับยื่น, refund = ไม่บังคับแต่ต้องยื่นถึงจะได้เงินคืน, none = ไม่ต้องยื่น */
+  status: 'required' | 'refund' | 'none'
+  form: FormType
+  /** เงินได้ทั้งปีที่ใช้เทียบเกณฑ์ (รวมของคู่สมรสถ้ามี) */
+  income: number
+  threshold: number
+  title: string
+  reason: string
+}
+
+const FORM_LABEL: Record<FormType, string> = { PND91: 'ภ.ง.ด.91', PND90: 'ภ.ง.ด.90' }
+
+/**
+ * ต้องยื่นแบบหรือไม่ แม้ไม่ต้องเสียภาษี — เทียบเงินได้ก่อนหักค่าใช้จ่ายกับเกณฑ์ของสถานะนั้น
+ * เงินปันผล/ดอกเบี้ยที่เลือกไม่นำมารวม (ภาษีหัก ณ ที่จ่ายเป็นที่สุด) ไม่นับ และไม่หักยกเว้นผู้สูงอายุออกก่อน
+ */
+export function filingRequirement(input: TaxInput, result: TaxResult, rules: TaxRules): FilingRequirement | null {
+  if (result.totalIncome <= 0) return null
+  const t = rules.filingThresholds ?? DEFAULT_FILING_THRESHOLDS
+  const married = input.profile.married
+  const spouseEarns = married && input.profile.spouseHasIncome
+  const spouseIncome = spouseEarns ? input.spouse.salary + input.spouse.freelance : 0
+  const salaryOnly = formType(input) === 'PND91' && !(spouseEarns && input.spouse.freelance > 0)
+  const income = result.totalIncome + spouseIncome
+  const group = married ? t.married : t.single
+  const threshold = salaryOnly ? group.salaryOnly : group.other
+  const form = formType(input)
+
+  const who = married ? 'มีคู่สมรส' : 'โสด'
+  const kind = salaryOnly ? 'มีเงินเดือนอย่างเดียว' : 'มีเงินได้ประเภทอื่นนอกจากเงินเดือน'
+  const subject = `${spouseIncome > 0 ? 'เงินได้ของคุณและคู่สมรสรวม' : salaryOnly ? 'เงินเดือนทั้งปี' : 'เงินได้ทั้งปี'} ${fmt(income)} บาท`
+  const rule = `เกณฑ์ ${fmt(threshold)} บาท (${who} ${kind})`
+
+  if (income > threshold || result.balance > 0) {
+    return {
+      status: 'required',
+      form,
+      income,
+      threshold,
+      title: `ต้องยื่นแบบ ${FORM_LABEL[form]}`,
+      reason:
+        income > threshold
+          ? `${subject} เกิน${rule}${result.tax === 0 ? ' จึงต้องยื่นแบบแม้ไม่ต้องเสียภาษี' : ''}`
+          : `มีภาษีต้องชำระเพิ่ม ${fmt(result.balance)} บาท`,
+    }
+  }
+  if (result.balance < 0) {
+    return {
+      status: 'refund',
+      form,
+      income,
+      threshold,
+      title: `ควรยื่นแบบ ${FORM_LABEL[form]} เพื่อขอเงินคืน`,
+      reason: `${subject} ไม่เกิน${rule} กฎหมายจึงไม่บังคับยื่น แต่ต้องยื่นแบบถึงจะได้เงินภาษีที่ถูกหักไว้คืน ${fmt(-result.balance)} บาท`,
+    }
+  }
+  return { status: 'none', form, income, threshold, title: 'ไม่ต้องยื่นแบบ', reason: `${subject} ไม่เกิน${rule}` }
 }

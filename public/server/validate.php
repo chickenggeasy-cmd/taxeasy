@@ -23,6 +23,16 @@ function validate_rules(mixed $r, ?int $expectYear = null): array
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($r['filingDeadlines'][$k] ?? ''))) $e[] = "filingDeadlines.$k ต้องเป็นรูปแบบ YYYY-MM-DD (พ.ศ.)";
     }
 
+    // ไม่บังคับมี (กฎฉบับเก่าไม่มี → ระบบใช้ค่าเริ่มต้น) แต่ถ้ามีต้องครบและเป็นตัวเลข
+    if (isset($r['filingThresholds'])) {
+        foreach (['single', 'married'] as $g) {
+            foreach (['salaryOnly', 'other'] as $k) {
+                $v = $r['filingThresholds'][$g][$k] ?? null;
+                if (!$num($v) || $v < 0) $e[] = "filingThresholds.$g.$k ต้องเป็นตัวเลข ≥ 0";
+            }
+        }
+    }
+
     $brackets = $r['brackets'] ?? null;
     if (!is_array($brackets) || count($brackets) < 2) {
         $e[] = 'brackets ต้องมีอย่างน้อย 2 ขั้น';

@@ -21,6 +21,16 @@
     "paper": "2569-03-31",
     "online": "2569-04-08"
   },
+  "filingThresholds": {
+    "single": {
+      "salaryOnly": 120000,
+      "other": 60000
+    },
+    "married": {
+      "salaryOnly": 220000,
+      "other": 120000
+    }
+  },
   "brackets": [
     {
       "upTo": 150000,

@@ -7,6 +7,7 @@ import { defaultTaxYear, fmt } from './lib/format'
 import { fetchRules, initialRules, type RulesState } from './lib/rules'
 import { readJSON, removeKey, writeJSON } from './lib/storage'
 import type { FeedbackCategory } from './lib/feedback'
+import { filingRequirement } from './lib/filing'
 import { Deductions } from './screens/Deductions'
 import { Feedback } from './screens/Feedback'
 import { Filing } from './screens/Filing'
@@ -63,6 +64,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(() => readJSON<Tab>('taxeasy:tab') ?? 'summary')
 
   const result = useMemo(() => calculateTax(state.input, rules), [state.input, rules])
+  const filing = useMemo(() => filingRequirement(state.input, result, rules), [state.input, result, rules])
 
   const refresh = async () => {
     setRefreshing(true)
@@ -118,7 +120,7 @@ export default function App() {
   }
 
   const screen = {
-    summary: <Summary result={result} rules={rules} onStart={() => go('income')} onFiling={() => go('filing')} onFeedback={() => openFeedback('wrong_number')} />,
+    summary: <Summary result={result} rules={rules} filing={filing} onStart={() => go('income')} onFiling={() => go('filing')} onFeedback={() => openFeedback('wrong_number')} />,
     filing: <Filing input={state.input} result={result} rules={rules} onBack={() => go('summary')} />,
     income: <Income input={state.input} update={update} rules={rules} result={result} onHalfYear={() => go('halfyear')} onPrivacy={openPrivacy} />,
     halfyear: <HalfYear input={state.input} update={update} rules={rules} onBack={() => go('income')} />,

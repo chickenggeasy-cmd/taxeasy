@@ -29,6 +29,12 @@ export interface Measure {
   maxDeduction: number
 }
 
+/** ต้องยื่นแบบเมื่อเงินได้ทั้งปี "เกิน" ยอดนี้: salaryOnly = มีเงินได้ 40(1) อย่างเดียว, other = มีเงินได้ประเภทอื่นด้วย */
+export interface FilingThresholds {
+  single: { salaryOnly: number; other: number }
+  married: { salaryOnly: number; other: number }
+}
+
 export interface TaxRules {
   taxYear: number
   revision: number
@@ -36,6 +42,8 @@ export interface TaxRules {
   notes?: string
   sources: { title: string; url: string }[]
   filingDeadlines: { paper: string; online: string }
+  /** เกณฑ์เงินได้ทั้งปีที่ต้องยื่นแบบ (ไม่มีในกฎเก่า → ใช้ค่าเริ่มต้นใน lib/filing.ts) */
+  filingThresholds?: FilingThresholds
   brackets: Bracket[]
   minimumTax: { rate: number; incomeThreshold: number; exemptIfNotExceed: number }
   elderlyExemption: number

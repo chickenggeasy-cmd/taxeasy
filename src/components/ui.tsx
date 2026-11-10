@@ -83,9 +83,23 @@ export function MoneyField({
           placeholder="0"
           className="num min-w-0 flex-1 bg-transparent px-3 py-3 text-right text-lg outline-none"
           value={text}
-          onFocus={() => {
+          onFocus={(e) => {
             setFocused(true)
-            setText(value ? String(value) : '')
+            // สลับเป็นตัวเลขดิบ (ไม่มีจุลภาค) ให้แก้ง่าย แต่ต้องรอให้เบราว์เซอร์วางเคอร์เซอร์หรือเลือกข้อความเสร็จก่อน
+            // แล้วคงตำแหน่งนั้นไว้ ถ้าสลับตอนโฟกัสเลย การเลือกทั้งช่องจะหาย ตัวเลขที่พิมพ์ทับจะไปต่อท้ายของเดิม
+            const el = e.currentTarget
+            const shown = el.value
+            setTimeout(() => {
+              if (document.activeElement !== el || el.value !== shown) return // ออกจากช่อง หรือเริ่มพิมพ์ไปแล้ว
+              const raw = shown.replace(/,/g, '')
+              if (raw === shown) return
+              const digitsBefore = (pos: number | null) => shown.slice(0, pos ?? shown.length).replace(/,/g, '').length
+              const start = digitsBefore(el.selectionStart)
+              const end = digitsBefore(el.selectionEnd)
+              el.value = raw
+              el.setSelectionRange(start, end)
+              setText(raw)
+            }, 0)
           }}
           onBlur={() => setFocused(false)}
           onChange={(e) => {

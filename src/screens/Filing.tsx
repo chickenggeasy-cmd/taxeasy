@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { FilingNotice } from '../components/FilingNotice'
 import { Icon, IconTile } from '../components/icons'
 import { PageHero } from '../components/ui'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { downloadIcs } from '../lib/calendar'
-import { documentChecklist, filingSteps, formType } from '../lib/filing'
+import { documentChecklist, filingRequirement, filingSteps, formType } from '../lib/filing'
 import { fmt, thaiDate } from '../lib/format'
 import { readJSON, writeJSON } from '../lib/storage'
 
@@ -32,6 +33,7 @@ function CopyButton({ value }: { value: number }) {
 
 export function Filing({ input, result, rules, onBack }: { input: TaxInput; result: TaxResult; rules: TaxRules; onBack: () => void }) {
   const steps = filingSteps(input, result, rules)
+  const filing = filingRequirement(input, result, rules)
   const docs = documentChecklist(input, rules)
   const docsKey = `taxeasy:docs:${rules.taxYear}`
   const [checked, setChecked] = useState<Record<string, boolean>>(() => readJSON(docsKey) ?? {})
@@ -49,6 +51,7 @@ export function Filing({ input, result, rules, onBack }: { input: TaxInput; resu
         ← กลับ
       </button>
       <PageHero art="more" title="ยื่นภาษีจริง" subtitle={`แบบ ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · ยื่นออนไลน์ได้ถึง ${thaiDate(rules.filingDeadlines.online)}`} />
+      {filing && <FilingNotice filing={filing} />}
 
       {!__PREVIEW__ && (
         <button type="button" onClick={() => downloadIcs(rules)} className="card flex items-center gap-3 rounded-2xl px-4 py-3 text-left">

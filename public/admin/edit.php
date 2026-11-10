@@ -10,7 +10,7 @@ if (!$row) {
     flash('ไม่พบกฎฉบับนี้', 'err');
     redirect('index.php');
 }
-$rules = json_decode($row['rules_json'], true);
+$rules = with_rule_defaults((array) json_decode($row['rules_json'], true));
 $editable = $row['status'] === 'draft';
 $raw = isset($_GET['raw']);
 
@@ -19,6 +19,10 @@ const LABELS = [
     'notes' => 'คำอธิบายกฎปีนี้',
     'filingDeadlines.paper' => 'กำหนดยื่นแบบกระดาษ (พ.ศ. YYYY-MM-DD)',
     'filingDeadlines.online' => 'กำหนดยื่นออนไลน์ (พ.ศ. YYYY-MM-DD)',
+    'filingThresholds.single.salaryOnly' => 'ต้องยื่นแบบ: โสด เงินเดือนอย่างเดียว เกิน',
+    'filingThresholds.single.other' => 'ต้องยื่นแบบ: โสด มีเงินได้อื่น เกิน',
+    'filingThresholds.married.salaryOnly' => 'ต้องยื่นแบบ: มีคู่สมรส เงินเดือนอย่างเดียว เกิน',
+    'filingThresholds.married.other' => 'ต้องยื่นแบบ: มีคู่สมรส มีเงินได้อื่น เกิน',
     'minimumTax.rate' => 'วิธี 0.5%: อัตรา',
     'minimumTax.incomeThreshold' => 'วิธี 0.5%: ใช้เมื่อเงินได้ 40(2)–(8) ตั้งแต่',
     'minimumTax.exemptIfNotExceed' => 'วิธี 0.5%: ยกเว้นถ้าภาษีไม่เกิน',
@@ -137,7 +141,7 @@ if ($editable && $_SERVER['REQUEST_METHOD'] === 'POST') {
 $st = db()->prepare("SELECT rules_json, revision FROM rule_sets WHERE tax_year = ? AND status = 'published' AND id <> ? ORDER BY revision DESC LIMIT 1");
 $st->execute([$row['tax_year'], $row['id']]);
 $pub = $st->fetch();
-$diff = $pub ? rules_diff(json_decode($pub['rules_json'], true), $rules) : [];
+$diff = $pub ? rules_diff(with_rule_defaults((array) json_decode($pub['rules_json'], true)), $rules) : [];
 $problems = validate_rules($rules, (int) $row['tax_year']);
 
 page_start("กฎปี {$row['tax_year']} ฉบับที่ {$row['revision']}");
@@ -206,7 +210,7 @@ $ro = $editable ? '' : ' disabled';
   </section>
 <?php else: ?>
   <?php
-  $groups = ['ทั่วไป' => ['notes', 'filingDeadlines', 'minimumTax', 'elderlyExemption', 'investment'], 'ค่าใช้จ่าย (อัตรา 0.5 = 50%)' => ['expenses'], 'ค่าลดหย่อน (บาท / อัตรา 0.3 = 30%)' => ['deductions']];
+  $groups = ['ทั่วไป' => ['notes', 'filingDeadlines', 'filingThresholds', 'minimumTax', 'elderlyExemption', 'investment'], 'ค่าใช้จ่าย (อัตรา 0.5 = 50%)' => ['expenses'], 'ค่าลดหย่อน (บาท / อัตรา 0.3 = 30%)' => ['deductions']];
   $flat = flatten($rules);
   foreach ($groups as $title => $prefixes): ?>
   <section class="card">

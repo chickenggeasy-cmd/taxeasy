@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Art } from '../components/Art'
 import { Icon, IconTile, type IconName } from '../components/icons'
+import { FilingNotice } from '../components/FilingNotice'
 import { ShareCard } from '../components/ShareCard'
 import { Staircase } from '../components/Staircase'
 import type { TaxResult, TaxRules } from '../engine/types'
 import { downloadIcs } from '../lib/calendar'
+import type { FilingRequirement } from '../lib/filing'
 import { daysUntil, fmt, pct, thaiDate } from '../lib/format'
 import { useAnimatedNumber } from '../lib/useAnimatedNumber'
 
@@ -113,6 +115,7 @@ function SectionTitle({ icon, title, subtitle }: { icon: IconName; title: string
 export function Summary({
   result,
   rules,
+  filing,
   compact = false,
   onStart,
   onFiling,
@@ -120,6 +123,7 @@ export function Summary({
 }: {
   result: TaxResult
   rules: TaxRules
+  filing?: FilingRequirement | null
   compact?: boolean
   onStart?: () => void
   onFiling?: () => void
@@ -142,6 +146,7 @@ export function Summary({
   return (
     <div className="anim-stagger flex flex-col gap-4">
       <Verdict result={result} />
+      {filing && <FilingNotice filing={filing} onFiling={compact ? undefined : onFiling} />}
 
       <div className="grid grid-cols-2 gap-3">
         <div className="card rounded-2xl p-3.5">
