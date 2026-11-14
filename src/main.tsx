@@ -3,10 +3,12 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import './index.css'
+import { applyLang } from './lib/lang'
 import { applySettings, loadSettings } from './lib/settings'
 
 // ใช้ธีมที่ผู้ใช้เลือกไว้ก่อนวาดหน้าจอ จะได้ไม่กระพริบ
 applySettings(loadSettings())
+applyLang()
 
 // แอปขึ้นแล้ว: ล้างธงกู้หน้าขาว เพื่อให้ช่วยได้อีกในครั้งหน้า
 try {

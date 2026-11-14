@@ -180,6 +180,9 @@ export interface FilingRequirement {
   threshold: number
   title: string
   reason: string
+  /** ข้อความภาษาอังกฤษของเหตุผลเดียวกัน */
+  titleEn: string
+  reasonEn: string
 }
 
 const FORM_LABEL: Record<FormType, string> = { PND91: 'ภ.ง.ด.91', PND90: 'ภ.ง.ด.90' }
@@ -205,6 +208,13 @@ export function filingRequirement(input: TaxInput, result: TaxResult, rules: Tax
   const subject = `${spouseIncome > 0 ? 'เงินได้ของคุณและคู่สมรสรวม' : salaryOnly ? 'เงินเดือนทั้งปี' : 'เงินได้ทั้งปี'} ${fmt(income)} บาท`
   const rule = `เกณฑ์ ${fmt(threshold)} บาท (${who} ${kind})`
 
+  // ฉบับภาษาอังกฤษ ใช้ความหมายเดียวกันกับฉบับไทยทุกประการ
+  const whoEn = married ? 'married' : 'single'
+  const kindEn = salaryOnly ? 'salary only' : 'with other income types'
+  const subjectEn = `${spouseIncome > 0 ? 'Your and your spouse’s combined income' : salaryOnly ? 'Annual salary' : 'Annual income'} ฿${fmt(income)}`
+  const ruleEn = `the ฿${fmt(threshold)} threshold (${whoEn}, ${kindEn})`
+  const amountEn = `฿${fmt(Math.abs(result.balance))}`
+
   if (income > threshold || result.balance > 0) {
     return {
       status: 'required',
@@ -216,6 +226,11 @@ export function filingRequirement(input: TaxInput, result: TaxResult, rules: Tax
         income > threshold
           ? `${subject} เกิน${rule}${result.tax === 0 ? ' จึงต้องยื่นแบบแม้ไม่ต้องเสียภาษี' : ''}`
           : `มีภาษีต้องชำระเพิ่ม ${fmt(result.balance)} บาท`,
+      titleEn: `You must file ${FORM_LABEL[form]}`,
+      reasonEn:
+        income > threshold
+          ? `${subjectEn} is above ${ruleEn}${result.tax === 0 ? '. You must file even though no tax is due.' : '.'}`
+          : `You owe ${amountEn} more tax.`,
     }
   }
   if (result.balance < 0) {
@@ -226,7 +241,55 @@ export function filingRequirement(input: TaxInput, result: TaxResult, rules: Tax
       threshold,
       title: `ควรยื่นแบบ ${FORM_LABEL[form]} เพื่อขอเงินคืน`,
       reason: `${subject} ไม่เกิน${rule} กฎหมายจึงไม่บังคับยื่น แต่ต้องยื่นแบบถึงจะได้เงินภาษีที่ถูกหักไว้คืน ${fmt(-result.balance)} บาท`,
+      titleEn: `You should file ${FORM_LABEL[form]} to claim a refund`,
+      reasonEn: `${subjectEn} is within ${ruleEn}, so filing is not required. But you must file to get back the ${amountEn} tax withheld.`,
     }
   }
-  return { status: 'none', form, income, threshold, title: 'ไม่ต้องยื่นแบบ', reason: `${subject} ไม่เกิน${rule}` }
+  return {
+    status: 'none',
+    form,
+    income,
+    threshold,
+    title: 'ไม่ต้องยื่นแบบ',
+    reason: `${subject} ไม่เกิน${rule}`,
+    titleEn: 'No need to file',
+    reasonEn: `${subjectEn} is within ${ruleEn}.`,
+  }
+}
+
+/** ตัวเลขจากแบบที่ยื่นจริง (ภ.ง.ด.90/91) ที่ผู้ใช้กรอกมาเทียบ — undefined = ยังไม่ได้กรอก */
+export interface FiledFigures {
+  netIncome?: number
+  tax?: number
+  /** ยอดที่ได้คืน (ใส่เป็นบวก) */
+  refund?: number
+  /** ยอดที่ต้องจ่ายเพิ่ม (ใส่เป็นบวก) */
+  due?: number
+}
+
+export interface FiledRow {
+  key: 'netIncome' | 'tax' | 'balance'
+  /** ค่าที่แอปคำนวณ */
+  ours: number
+  /** ค่าตามแบบที่ยื่น */
+  filed: number
+  /** ผลต่าง (แอป − แบบที่ยื่น) */
+  diff: number
+  /** ตรงกันเมื่อต่างไม่เกิน 1 บาท (ปัดเศษของกรมฯ) */
+  match: boolean
+}
+
+/** เทียบเฉพาะรายการที่ผู้ใช้กรอก ยอดได้คืน/จ่ายเพิ่มเทียบเป็นยอดสุทธิ (+ จ่ายเพิ่ม, − ได้คืน) เหมือนแอปคำนวณ */
+export function compareWithFiled(result: TaxResult, filed: FiledFigures): FiledRow[] {
+  const rows: FiledRow[] = []
+  const add = (key: FiledRow['key'], ours: number, theirs: number) => {
+    const diff = Math.round((ours - theirs) * 100) / 100
+    rows.push({ key, ours, filed: theirs, diff, match: Math.abs(diff) <= 1 })
+  }
+  if (filed.netIncome !== undefined) add('netIncome', result.netIncome, filed.netIncome)
+  if (filed.tax !== undefined) add('tax', result.tax, filed.tax)
+  if (filed.refund !== undefined || filed.due !== undefined) {
+    add('balance', result.balance, (filed.due ?? 0) - (filed.refund ?? 0))
+  }
+  return rows
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { PageHero, Section } from '../components/ui'
 import type { TaxRules } from '../engine/types'
-import { thaiDate } from '../lib/format'
+import { dateText } from '../lib/format'
+import { useLang, useT } from '../lib/lang'
 import { downloadBackup, restoreBackup } from '../lib/backup'
 import type { RulesState } from '../lib/rules'
 
@@ -24,6 +25,7 @@ export function More({
   onFiling,
   onPrivacy,
   onFeedback,
+  onReplayOnboarding,
 }: {
   rules: TaxRules
   rulesState: RulesState
@@ -37,8 +39,11 @@ export function More({
   onFiling: () => void
   onPrivacy: () => void
   onFeedback: () => void
+  onReplayOnboarding: () => void
 }) {
   const [confirmReset, setConfirmReset] = useState(false)
+  const t = useT()
+  const lang = useLang()
   const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   return (
@@ -59,7 +64,9 @@ export function More({
           ))}
         </div>
         <p className="text-sm text-muted">
-          ยื่นภาษีปี {rules.taxYear}: ออนไลน์ถึง {thaiDate(rules.filingDeadlines.online)} · กระดาษถึง {thaiDate(rules.filingDeadlines.paper)}
+          {lang === 'en'
+            ? `Filing for tax year ${rules.taxYear}: online until ${dateText(rules.filingDeadlines.online, 'en')} · paper until ${dateText(rules.filingDeadlines.paper, 'en')}`
+            : `ยื่นภาษีปี ${rules.taxYear}: ออนไลน์ถึง ${dateText(rules.filingDeadlines.online, 'th')} · กระดาษถึง ${dateText(rules.filingDeadlines.paper, 'th')}`}
         </p>
       </Section>
 
@@ -161,11 +168,16 @@ export function More({
         </div>
       </Section>
 
-      <Section icon="bulb" title="ช่วยเหลือ" subtitle="เจอปัญหา หรืออยากรู้ว่าข้อมูลถูกส่งไปไหน">
+      <Section icon="bulb" title={t('ช่วยเหลือ', 'Help')} subtitle={t('เจอปัญหา หรืออยากรู้ว่าข้อมูลถูกส่งไปไหน', 'Found a problem, or want to know where your data goes')}>
         <div className="flex flex-col divide-y divide-line">
           {[
-            { label: 'แจ้งปัญหา / ข้อเสนอแนะ', hint: 'ตัวเลขไม่ตรง ใช้งานไม่ได้ หรืออยากให้เพิ่มอะไร', onClick: onFeedback },
-            { label: 'นโยบายความเป็นส่วนตัว', hint: 'ข้อมูลอยู่ที่ไหน ส่งไปไหน และวิธีลบ', onClick: onPrivacy },
+            {
+              label: t('ดูคำแนะนำการใช้งานอีกครั้ง', 'Show the quick guide again'),
+              hint: t('4 หน้าสั้น ๆ ว่าแอปทำอะไรและเริ่มอย่างไร', 'Four short pages on what the app does and how to start'),
+              onClick: onReplayOnboarding,
+            },
+            { label: t('แจ้งปัญหา / ข้อเสนอแนะ', 'Report a problem or suggestion'), hint: t('ตัวเลขไม่ตรง ใช้งานไม่ได้ หรืออยากให้เพิ่มอะไร', 'Numbers differ, something is broken, or you want a feature'), onClick: onFeedback },
+            { label: t('นโยบายความเป็นส่วนตัว', 'Privacy policy'), hint: t('ข้อมูลอยู่ที่ไหน ส่งไปไหน และวิธีลบ', 'Where data is kept, where it goes, and how to delete it'), onClick: onPrivacy },
           ].map((r) => (
             <button key={r.label} type="button" onClick={r.onClick} className="flex items-center gap-3 py-3 text-left">
               <span className="min-w-0 flex-1">

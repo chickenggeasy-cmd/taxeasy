@@ -1,4 +1,5 @@
 import type { FilingRequirement } from '../lib/filing'
+import { useLang, useT } from '../lib/lang'
 import { Icon } from './icons'
 
 const TONE: Record<FilingRequirement['status'], { box: string; title: string; mark: string }> = {
@@ -9,7 +10,11 @@ const TONE: Record<FilingRequirement['status'], { box: string; title: string; ma
 
 /** บอกว่าต้องยื่นแบบหรือไม่ พร้อมเหตุผล (คนที่ไม่ต้องเสียภาษีก็อาจต้องยื่น) */
 export function FilingNotice({ filing, onFiling }: { filing: FilingRequirement; onFiling?: () => void }) {
+  const t = useT()
+  const lang = useLang()
   const tone = TONE[filing.status]
+  const title = lang === 'en' ? filing.titleEn : filing.title
+  const reason = lang === 'en' ? filing.reasonEn : filing.reason
   return (
     <section className={`flex items-start gap-3 rounded-2xl px-4 py-3 ${tone.box}`}>
       <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-surface ${tone.title}`}>
@@ -20,12 +25,12 @@ export function FilingNotice({ filing, onFiling }: { filing: FilingRequirement; 
           <span aria-hidden className="text-xs">
             {tone.mark}
           </span>
-          {filing.title}
+          {title}
         </p>
-        <p className="num text-sm">{filing.reason}</p>
+        <p className="num text-sm">{reason}</p>
         {onFiling && filing.status !== 'none' && (
           <button type="button" onClick={onFiling} className="mt-1 text-sm font-semibold text-accent">
-            ดูขั้นตอนยื่นแบบ →
+            {t('ดูขั้นตอนยื่นแบบ →', 'See how to file →')}
           </button>
         )}
       </div>

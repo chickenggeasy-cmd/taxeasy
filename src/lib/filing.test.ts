@@ -3,7 +3,7 @@ import rules2568 from '../../rules/2568.json'
 import { calculateTax } from '../engine/calculate'
 import { emptyInput } from '../engine/defaults'
 import type { TaxRules } from '../engine/types'
-import { DEFAULT_FILING_THRESHOLDS, documentChecklist, filingRequirement, filingSteps, formType } from './filing'
+import { compareWithFiled, DEFAULT_FILING_THRESHOLDS, documentChecklist, filingRequirement, filingSteps, formType } from './filing'
 
 const R = rules2568 as TaxRules
 
@@ -105,3 +105,47 @@ describe('คู่มือยื่นภาษี', () => {
     })
   })
 })
+
+describe('เทียบกับแบบที่ยื่นจริง', () => {
+  const sample = () => {
+    const i = emptyInput()
+    i.income.salary = 720_000
+    i.credits.withheld = 26_000
+    i.deductions.socialSecurity = 10_500
+    return calculateTax(i, R)
+  }
+
+  it('ไม่มีอะไรให้เทียบ ถ้าผู้ใช้ยังไม่ได้กรอก', () => {
+    expect(compareWithFiled(sample(), {})).toEqual([])
+  })
+
+  it('ตรงกันเมื่อต่างไม่เกิน 1 บาท และไม่ตรงเมื่อต่างเกิน', () => {
+    const r = sample()
+    const same = compareWithFiled(r, { netIncome: r.netIncome, tax: r.tax })
+    expect(same.map((x) => x.match)).toEqual([true, true])
+    const off = compareWithFiled(r, { tax: r.tax - 100 })
+    expect(off[0]).toMatchObject({ key: 'tax', match: false, diff: 100 })
+    expect(compareWithFiled(r, { tax: r.tax - 1 })[0].match).toBe(true)
+    expect(compareWithFiled(r, { tax: r.tax - 1.5 })[0].match).toBe(false)
+  })
+
+  it('ยอดได้คืนและจ่ายเพิ่มรวมเป็นยอดสุทธิเทียบกับแอป (ได้คืนเป็นลบ)', () => {
+    const r = sample() // ตัวอย่างนี้ต้องจ่ายเพิ่ม → balance เป็นบวก
+    expect(r.balance).toBeGreaterThan(0)
+    const due = compareWithFiled(r, { due: r.balance })
+    expect(due[0]).toMatchObject({ key: 'balance', ours: r.balance, filed: r.balance, match: true })
+    // ผู้ใช้ใส่ผิดเป็นได้คืนยอดเดียวกัน → ไม่ตรง
+    expect(compareWithFiled(r, { refund: r.balance })[0].match).toBe(false)
+    // ไม่มีทั้งได้คืนและจ่ายเพิ่ม → ไม่เทียบ
+    expect(compareWithFiled(r, { netIncome: r.netIncome })).toHaveLength(1)
+  })
+
+  it('เทียบเงินได้สุทธิกับภาษีพร้อมกันได้', () => {
+    const r = sample()
+    const rows = compareWithFiled(r, { netIncome: r.netIncome + 500, tax: r.tax, refund: 7_550 })
+    expect(rows.map((x) => x.key)).toEqual(['netIncome', 'tax', 'balance'])
+    expect(rows[0]).toMatchObject({ match: false, diff: -500 })
+    expect(rows[1].match).toBe(true)
+  })
+})
+

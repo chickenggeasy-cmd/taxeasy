@@ -21,15 +21,18 @@ import { Summary, Verdict } from './screens/Summary'
 import { Art } from './components/Art'
 import { Assistant } from './components/Assistant'
 import { DisplaySettings } from './components/DisplaySettings'
+import { hasOnboarded, Onboarding } from './components/Onboarding'
+import { taxYearText } from './lib/format'
+import { useLang, useT } from './lib/lang'
 
 type Tab = 'summary' | 'income' | 'deductions' | 'plan' | 'more' | 'filing' | 'market' | 'halfyear' | 'privacy' | 'feedback'
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'summary', label: 'สรุป', icon: 'M4 19V9m6 10V5m6 14v-7m4 7H2' },
-  { id: 'income', label: 'รายได้', icon: 'M3 7h18v10H3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5M6 10v4m12-4v4' },
-  { id: 'deductions', label: 'ลดหย่อน', icon: 'M6 18L18 6M8 8.5a1.5 1.5 0 100-.01M16 16.5a1.5 1.5 0 100-.01' },
-  { id: 'plan', label: 'วางแผน', icon: 'M4 18l5-5 4 3 7-8m0 0h-5m5 0v5' },
-  { id: 'more', label: 'เพิ่มเติม', icon: 'M5 12h.01M12 12h.01M19 12h.01' },
+const TABS: { id: Tab; label: [string, string]; icon: string }[] = [
+  { id: 'summary', label: ['สรุป', 'Summary'], icon: 'M4 19V9m6 10V5m6 14v-7m4 7H2' },
+  { id: 'income', label: ['รายได้', 'Income'], icon: 'M3 7h18v10H3zM12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5M6 10v4m12-4v4' },
+  { id: 'deductions', label: ['ลดหย่อน', 'Deductions'], icon: 'M6 18L18 6M8 8.5a1.5 1.5 0 100-.01M16 16.5a1.5 1.5 0 100-.01' },
+  { id: 'plan', label: ['วางแผน', 'Plan'], icon: 'M4 18l5-5 4 3 7-8m0 0h-5m5 0v5' },
+  { id: 'more', label: ['เพิ่มเติม', 'More'], icon: 'M5 12h.01M12 12h.01M19 12h.01' },
 ]
 
 const inputKey = (year: number) => `taxeasy:input:${year}`
@@ -62,6 +65,9 @@ export default function App() {
   }
   const [state, setState] = useState(() => loadInput(year))
   const [tab, setTab] = useState<Tab>(() => readJSON<Tab>('taxeasy:tab') ?? 'summary')
+  const [onboarding, setOnboarding] = useState(() => !hasOnboarded())
+  const t = useT()
+  const lang = useLang()
 
   const result = useMemo(() => calculateTax(state.input, rules), [state.input, rules])
   const filing = useMemo(() => filingRequirement(state.input, result, rules), [state.input, result, rules])
@@ -121,7 +127,7 @@ export default function App() {
 
   const screen = {
     summary: <Summary result={result} rules={rules} filing={filing} onStart={() => go('income')} onFiling={() => go('filing')} onFeedback={() => openFeedback('wrong_number')} />,
-    filing: <Filing input={state.input} result={result} rules={rules} onBack={() => go('summary')} />,
+    filing: <Filing input={state.input} result={result} rules={rules} onBack={() => go('summary')} onFeedback={() => openFeedback('wrong_number')} />,
     income: <Income input={state.input} update={update} rules={rules} result={result} onHalfYear={() => go('halfyear')} onPrivacy={openPrivacy} />,
     halfyear: <HalfYear input={state.input} update={update} rules={rules} onBack={() => go('income')} />,
     deductions: <Deductions input={state.input} update={update} rules={rules} result={result} />,
@@ -156,6 +162,7 @@ export default function App() {
         onFiling={() => go('filing')}
         onPrivacy={openPrivacy}
         onFeedback={() => openFeedback()}
+        onReplayOnboarding={() => setOnboarding(true)}
         onExample={() => {
           removeKey(inputKey(year))
           setState({ input: EXAMPLES.salary.build(year, rules), example: 'salary' })
@@ -166,7 +173,14 @@ export default function App() {
   }[tab]
 
   const balanceText = result.balance < 0 ? `ได้คืน ฿${fmt(-result.balance)}` : result.balance > 0 ? `จ่ายเพิ่ม ฿${fmt(result.balance)}` : 'ไม่ต้องจ่ายเพิ่ม'
-  const title = TABS.find((t) => t.id === tab)?.label ?? { market: 'ตลาดหุ้น', halfyear: 'ภ.ง.ด.94', privacy: 'ความเป็นส่วนตัว', feedback: 'แจ้งปัญหา' }[tab as string] ?? 'ยื่นภาษี'
+  const titles: Partial<Record<Tab, [string, string]>> = {
+    market: ['ตลาดหุ้น', 'Global markets'],
+    halfyear: ['ภ.ง.ด.94', 'ภ.ง.ด.94 (half-year)'],
+    privacy: ['ความเป็นส่วนตัว', 'Privacy'],
+    feedback: ['แจ้งปัญหา', 'Report a problem'],
+  }
+  const tabLabel = (id: Tab): [string, string] | undefined => TABS.find((x) => x.id === id)?.label ?? titles[id]
+  const title = t(...(tabLabel(tab) ?? ['ยื่นภาษี', 'File'] as [string, string]))
 
   return (
     <div className="min-h-full">
@@ -180,20 +194,20 @@ export default function App() {
             </div>
           </div>
           <nav aria-label="เมนูหลัก" className="hidden gap-1 md:flex">
-            {TABS.map((t) => (
+            {TABS.map((tb) => (
               <button
-                key={t.id}
+                key={tb.id}
                 type="button"
-                onClick={() => go(t.id)}
-                aria-current={tab === t.id ? 'page' : undefined}
-                className={`rounded-xl px-3 py-2 font-semibold ${tab === t.id ? 'bg-accent-soft text-accent' : 'text-muted hover:text-ink'}`}
+                onClick={() => go(tb.id)}
+                aria-current={tab === tb.id ? 'page' : undefined}
+                className={`rounded-xl px-3 py-2 font-semibold ${tab === tb.id ? 'bg-accent-soft text-accent' : 'text-muted hover:text-ink'}`}
               >
-                {t.label}
+                {t(...tb.label)}
               </button>
             ))}
           </nav>
           <button type="button" onClick={() => go('more')} className="num shrink-0 rounded-full border border-line px-3 py-1.5 text-sm font-semibold">
-            ปีภาษี {year}
+            {taxYearText(year, lang)}
           </button>
         </div>
       </header>
@@ -207,17 +221,17 @@ export default function App() {
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                 <p className="min-w-0 text-[15px]">
-                  <span className="mb-1 inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">ข้อมูลตัวอย่าง</span>
-                  <b className="block font-display text-lg">ลองดูว่าภาษีง่ายๆ คำนวณให้คุณยังไง</b>
-                  <span className="block text-sm text-muted">{EXAMPLES[state.example].desc}</span>
+                  <span className="mb-1 inline-block rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent">{t('ข้อมูลตัวอย่าง', 'Sample data')}</span>
+                  <b className="block font-display text-lg">{t('ลองดูว่าภาษีง่ายๆ คำนวณให้คุณยังไง', 'See how TaxEasy works out your tax')}</b>
+                  <span className="block text-sm text-muted">{t(EXAMPLES[state.example].desc, EXAMPLES[state.example].descEn)}</span>
                 </p>
                 <button type="button" onClick={startFresh} className="shrink-0 rounded-2xl bg-accent px-5 py-2.5 font-semibold text-accent-ink shadow-md">
-                  เริ่มกรอกของฉัน
+                  {t('เริ่มกรอกของฉัน', 'Start with my own numbers')}
                 </button>
               </div>
               <div className="flex flex-col gap-2 border-t border-line px-4 py-3">
-                <span className="text-xs font-semibold text-muted">ลองตัวอย่างอื่น</span>
-                <div role="radiogroup" aria-label="เลือกข้อมูลตัวอย่าง" className="flex flex-wrap gap-2">
+                <span className="text-xs font-semibold text-muted">{t('ลองตัวอย่างอื่น', 'Try another example')}</span>
+                <div role="radiogroup" aria-label={t('เลือกข้อมูลตัวอย่าง', 'Choose a sample')} className="flex flex-wrap gap-2">
                   {EXAMPLE_IDS.map((id) => (
                     <button
                       key={id}
@@ -227,7 +241,7 @@ export default function App() {
                       onClick={() => setState({ input: EXAMPLES[id].build(year, rules), example: id })}
                       className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors ${state.example === id ? 'border-accent bg-accent text-accent-ink' : 'border-line text-muted hover:text-ink'}`}
                     >
-                      {EXAMPLES[id].label}
+                      {t(EXAMPLES[id].label, EXAMPLES[id].labelEn)}
                     </button>
                   ))}
                 </div>
@@ -237,10 +251,13 @@ export default function App() {
           {state.example && tab !== 'summary' && (
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-dashed border-accent/60 bg-accent-soft/50 px-4 py-2.5">
               <p className="min-w-0 text-sm">
-                <b className="text-accent">ข้อมูลตัวอย่าง · {EXAMPLES[state.example].label}</b> <span className="text-muted">ลองแก้ตัวเลขดูได้เลย</span>
+                <b className="text-accent">
+                  {t('ข้อมูลตัวอย่าง', 'Sample data')} · {t(EXAMPLES[state.example].label, EXAMPLES[state.example].labelEn)}
+                </b>{' '}
+                <span className="text-muted">{t('ลองแก้ตัวเลขดูได้เลย', 'Feel free to change the numbers')}</span>
               </p>
               <button type="button" onClick={startFresh} className="shrink-0 rounded-xl bg-accent px-3 py-1.5 text-sm font-semibold text-accent-ink">
-                เริ่มกรอกของฉัน
+                {t('เริ่มกรอกของฉัน', 'Start with my own numbers')}
               </button>
             </div>
           )}
@@ -274,6 +291,7 @@ export default function App() {
       </div>
 
       <DisplaySettings raised={tab !== 'summary'} />
+      <Onboarding open={onboarding} onClose={() => setOnboarding(false)} />
       <Assistant input={state.input} result={result} rules={rules} raised={tab !== 'summary'} onPrivacy={openPrivacy} />
 
       {/* แถบล่างบนมือถือ: ผลภาษีแบบสด + เมนู */}
@@ -295,18 +313,18 @@ export default function App() {
           className="grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom,0px)]"
           style={{ paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)' }}
         >
-          {TABS.map((t) => (
+          {TABS.map((tb) => (
             <button
-              key={t.id}
+              key={tb.id}
               type="button"
-              onClick={() => go(t.id)}
-              aria-current={tab === t.id ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 pt-2 pb-2 text-xs font-semibold ${tab === t.id ? 'text-accent' : 'text-muted'}`}
+              onClick={() => go(tb.id)}
+              aria-current={tab === tb.id ? 'page' : undefined}
+              className={`flex flex-col items-center gap-1 pt-2 pb-2 text-xs font-semibold ${tab === tb.id ? 'text-accent' : 'text-muted'}`}
             >
-              <span className={`grid h-8 w-14 place-items-center rounded-full transition-colors ${tab === t.id ? 'bg-accent-soft' : ''}`}>
-                <Icon d={t.icon} />
+              <span className={`grid h-8 w-14 place-items-center rounded-full transition-colors ${tab === tb.id ? 'bg-accent-soft' : ''}`}>
+                <Icon d={tb.icon} />
               </span>
-              {t.label}
+              {t(...tb.label)}
             </button>
           ))}
         </nav>

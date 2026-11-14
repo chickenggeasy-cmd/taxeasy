@@ -1,11 +1,13 @@
 import { useState } from 'react'
+import { FiledCompare } from '../components/FiledCompare'
 import { FilingNotice } from '../components/FilingNotice'
 import { Icon, IconTile } from '../components/icons'
 import { PageHero } from '../components/ui'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { downloadIcs } from '../lib/calendar'
 import { documentChecklist, filingRequirement, filingSteps, formType } from '../lib/filing'
-import { fmt, thaiDate } from '../lib/format'
+import { dateText, fmt } from '../lib/format'
+import { useLang, useT } from '../lib/lang'
 import { readJSON, writeJSON } from '../lib/storage'
 
 function CopyButton({ value }: { value: number }) {
@@ -31,7 +33,21 @@ function CopyButton({ value }: { value: number }) {
   )
 }
 
-export function Filing({ input, result, rules, onBack }: { input: TaxInput; result: TaxResult; rules: TaxRules; onBack: () => void }) {
+export function Filing({
+  input,
+  result,
+  rules,
+  onBack,
+  onFeedback,
+}: {
+  input: TaxInput
+  result: TaxResult
+  rules: TaxRules
+  onBack: () => void
+  onFeedback?: () => void
+}) {
+  const t = useT()
+  const lang = useLang()
   const steps = filingSteps(input, result, rules)
   const filing = filingRequirement(input, result, rules)
   const docs = documentChecklist(input, rules)
@@ -48,9 +64,17 @@ export function Filing({ input, result, rules, onBack }: { input: TaxInput; resu
   return (
     <div className="anim-stagger flex flex-col gap-4">
       <button type="button" onClick={onBack} className="self-start rounded-xl px-1 text-sm font-semibold text-accent">
-        ← กลับ
+        {t('← กลับ', '← Back')}
       </button>
-      <PageHero art="more" title="ยื่นภาษีจริง" subtitle={`แบบ ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · ยื่นออนไลน์ได้ถึง ${thaiDate(rules.filingDeadlines.online)}`} />
+      <PageHero
+        art="more"
+        title={t('ยื่นภาษีจริง', 'File your return')}
+        subtitle={
+          lang === 'en'
+            ? `Form ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · online until ${dateText(rules.filingDeadlines.online, lang)}`
+            : `แบบ ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · ยื่นออนไลน์ได้ถึง ${dateText(rules.filingDeadlines.online, lang)}`
+        }
+      />
       {filing && <FilingNotice filing={filing} />}
 
       {!__PREVIEW__ && (
@@ -132,9 +156,11 @@ export function Filing({ input, result, rules, onBack }: { input: TaxInput; resu
         className="flex items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3.5 font-semibold text-accent-ink shadow-md"
       >
         <Icon name="send" size={20} />
-        เปิดเว็บ e-Filing ของกรมสรรพากร
+        {t('เปิดเว็บ e-Filing ของกรมสรรพากร', 'Open the Revenue Department e-Filing site')}
       </a>
       <p className="px-1 text-xs text-muted">ชื่อช่องในระบบ e-Filing อาจต่างจากที่แสดงเล็กน้อย และระบบอาจเติมข้อมูลบางส่วนให้เอง เช่น เงินเดือนจากนายจ้าง หรือเงินบริจาคผ่าน e-Donation</p>
+
+      <FiledCompare result={result} onFeedback={onFeedback} />
     </div>
   )
 }

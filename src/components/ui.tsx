@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { fmt } from '../lib/format'
 import { Art, type ArtName } from './Art'
+import { useT } from '../lib/lang'
 import { IconTile, type IconName } from './icons'
 
 /** หัวหน้าแต่ละแท็บ: ชื่อหน้า + ภาพประกอบ (ถ้ามีไฟล์ใน images/) */
@@ -61,6 +62,7 @@ export function MoneyField({
   allowed?: number
   note?: string
 }) {
+  const t = useT()
   const [text, setText] = useState(value ? fmt(value) : '')
   const [focused, setFocused] = useState(false)
   useEffect(() => {
@@ -107,7 +109,7 @@ export function MoneyField({
             onChange(parse(e.target.value))
           }}
         />
-        <span className="pr-3 text-muted">บาท</span>
+        <span className="pr-3 text-muted">{t('บาท', 'baht')}</span>
       </div>
       {(hint || max !== undefined) && (
         <p className="text-sm text-muted">

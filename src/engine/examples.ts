@@ -5,7 +5,9 @@ export type ExampleId = 'salary' | 'freelance' | 'family' | 'investor'
 
 interface Example {
   label: string
+  labelEn: string
   desc: string
+  descEn: string
   build: (year: number, rules: TaxRules) => TaxInput
 }
 
@@ -13,7 +15,9 @@ interface Example {
 export const EXAMPLES: Record<ExampleId, Example> = {
   salary: {
     label: 'มนุษย์เงินเดือน',
+    labelEn: 'Salaried employee',
     desc: 'เงินเดือน 60,000 บาท/เดือน มีลูก 1 คน ดูแลแม่ 1 คน',
+    descEn: 'Salary 60,000 baht/month, 1 child, supports 1 parent',
     build: (year, rules) => {
       const i = emptyInput()
       i.income.salary = 720_000
@@ -28,7 +32,9 @@ export const EXAMPLES: Record<ExampleId, Example> = {
   },
   freelance: {
     label: 'ฟรีแลนซ์',
+    labelEn: 'Freelancer',
     desc: 'รับงานออกแบบ 60,000 บาท/เดือน ลูกค้าบางรายไม่ได้หักภาษี ณ ที่จ่าย',
+    descEn: 'Design work, 60,000 baht/month. Some clients did not withhold tax',
     build: () => {
       const i = emptyInput()
       i.income.freelance = 720_000
@@ -40,7 +46,9 @@ export const EXAMPLES: Record<ExampleId, Example> = {
   },
   family: {
     label: 'คนมีครอบครัว',
+    labelEn: 'Family with a spouse',
     desc: 'เงินเดือน 125,000 บาท/เดือน คู่สมรสไม่มีรายได้ ลูก 2 คน ผ่อนบ้าน',
+    descEn: 'Salary 125,000 baht/month, spouse has no income, 2 children, home loan',
     build: (year, rules) => {
       const i = emptyInput()
       i.profile.married = true
@@ -59,7 +67,9 @@ export const EXAMPLES: Record<ExampleId, Example> = {
   },
   investor: {
     label: 'นักลงทุน',
+    labelEn: 'Investor',
     desc: 'เงินเดือน 80,000 บาท/เดือน มีเงินปันผลหุ้นไทย ซื้อ RMF และ ThaiESG',
+    descEn: 'Salary 80,000 baht/month, Thai stock dividends, buys RMF and ThaiESG',
     build: (_year, rules) => {
       const i = emptyInput()
       i.income.salary = 960_000
