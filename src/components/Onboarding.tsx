@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '../lib/lang'
 import { readJSON, writeJSON } from '../lib/storage'
-import { Art, type ArtName } from './Art'
 
 export const ONBOARDING_KEY = 'taxeasy:onboarded'
 
@@ -10,9 +9,11 @@ export function hasOnboarded(): boolean {
   return readJSON<boolean>(ONBOARDING_KEY) === true
 }
 
-const SLIDES: { art: ArtName; th: [string, string]; en: [string, string] }[] = [
+type SlideKind = 'welcome' | 'income' | 'deductions' | 'result'
+
+const SLIDES: { kind: SlideKind; th: [string, string]; en: [string, string] }[] = [
   {
-    art: 'hero',
+    kind: 'welcome',
     th: ['ยินดีต้อนรับสู่ภาษีง่ายๆ', 'แอปคำนวณภาษีเงินได้บุคคลธรรมดาให้คุณรู้ว่าปีนี้ได้คืนหรือต้องจ่ายเพิ่มเท่าไร ไม่ต้องสมัครสมาชิก ข้อมูลอยู่ในเครื่องคุณ'],
     en: [
       'Welcome to TaxEasy',
@@ -20,7 +21,7 @@ const SLIDES: { art: ArtName; th: [string, string]; en: [string, string] }[] = [
     ],
   },
   {
-    art: 'income',
+    kind: 'income',
     th: ['กรอกรายได้ของคุณ', 'ไปที่แท็บรายได้ กรอกเงินเดือนทั้งปีและภาษีที่ถูกหักไว้ตามใบ 50 ทวิ ใช้เวลาไม่ถึง 2 นาที ตอนนี้กำลังดูข้อมูลตัวอย่างอยู่'],
     en: [
       'Enter your income',
@@ -28,7 +29,7 @@ const SLIDES: { art: ArtName; th: [string, string]; en: [string, string] }[] = [
     ],
   },
   {
-    art: 'deductions',
+    kind: 'deductions',
     th: ['ค่าลดหย่อนให้แอปคิดเอง', 'แอปหักค่าใช้จ่ายและตรวจเพดานลดหย่อนทุกรายการให้ ถ้ามีคู่สมรสหรือบุตร ใส่ได้ในแท็บลดหย่อน'],
     en: [
       'Deductions are calculated for you',
@@ -36,7 +37,7 @@ const SLIDES: { art: ArtName; th: [string, string]; en: [string, string] }[] = [
     ],
   },
   {
-    art: 'refund',
+    kind: 'result',
     th: ['ดูผลและรู้ว่าต้องยื่นไหม', 'หน้าสรุปบอกยอดที่ได้คืนหรือต้องจ่ายเพิ่ม และบอกว่าต้องยื่นแบบหรือไม่ แม้ไม่ต้องเสียภาษี ลองวางแผนลดหย่อนได้ที่แท็บวางแผน'],
     en: [
       'See your result and whether to file',
@@ -44,6 +45,139 @@ const SLIDES: { art: ArtName; th: [string, string]; en: [string, string] }[] = [
     ],
   },
 ]
+
+/** สีจากธีมของแอป จึงเปลี่ยนตามโหมดสว่าง/มืดและโหมดตาบอดสีอัตโนมัติ */
+const fill = (name: string) => ({ style: { fill: `var(--${name})` } })
+const card = { style: { fill: 'var(--surface)', stroke: 'var(--line)', strokeWidth: 1 } }
+const outline = (name: string) => ({ style: { fill: 'var(--surface)', stroke: `var(--${name})`, strokeWidth: 1.5 } })
+const rule = { style: { stroke: 'var(--line)' } }
+
+/**
+ * ภาพสอนใช้งาน วาดเลียนแบบหน้าจอจริงของแอป (ไม่ต้องมีไฟล์รูป ไม่โหลดอะไรเพิ่ม)
+ * ข้อความในภาพเป็นตัวอย่างเดียวกับข้อมูลตัวอย่างในแอป
+ */
+function SlideArt({ kind }: { kind: SlideKind }) {
+  const svgProps = { viewBox: '0 0 320 176', className: 'h-full w-full', 'aria-hidden': true }
+
+  if (kind === 'income') {
+    return (
+      <svg {...svgProps}>
+        <rect x="30" y="12" width="260" height="114" rx="14" {...card} />
+        <text x="46" y="32" fontSize="10.5" {...fill('muted')}>
+          เงินเดือนทั้งปี
+        </text>
+        <rect x="46" y="38" width="228" height="26" rx="8" {...outline('accent')} />
+        <text x="262" y="56" textAnchor="end" fontSize="13" fontWeight="700" {...fill('ink')}>
+          720,000
+        </text>
+        <text x="46" y="82" fontSize="10.5" {...fill('muted')}>
+          ภาษีที่ถูกหักไว้ (ใบ 50 ทวิ)
+        </text>
+        <rect x="46" y="88" width="228" height="26" rx="8" {...outline('line')} />
+        <text x="262" y="106" textAnchor="end" fontSize="13" fontWeight="700" {...fill('ink')}>
+          26,000
+        </text>
+        <rect x="40" y="138" width="240" height="28" rx="14" {...card} />
+        <rect x="90" y="142" width="44" height="20" rx="10" {...fill('accent-soft')} />
+        <text x="112" y="156" textAnchor="middle" fontSize="9.5" fontWeight="700" {...fill('accent')}>
+          รายได้
+        </text>
+        {[64, 160, 208, 256].map((x) => (
+          <circle key={x} cx={x} cy="152" r="3" {...fill('muted')} />
+        ))}
+      </svg>
+    )
+  }
+
+  if (kind === 'deductions') {
+    return (
+      <svg {...svgProps}>
+        <rect x="30" y="10" width="260" height="156" rx="14" {...card} />
+        <circle cx="54" cy="34" r="9" {...fill('accent-soft')} />
+        <text x="70" y="38" fontSize="11" fontWeight="600" {...fill('ink')}>
+          ประกันชีวิต
+        </text>
+        <text x="274" y="38" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
+          30,000
+        </text>
+        <rect x="70" y="46" width="204" height="5" rx="2.5" {...fill('line')} />
+        <rect x="70" y="46" width="61" height="5" rx="2.5" {...fill('accent')} />
+        <text x="70" y="62" fontSize="8.5" {...fill('muted')}>
+          เพดาน 100,000 บาท
+        </text>
+        <line x1="50" x2="270" y1="72" y2="72" {...rule} />
+        <circle cx="54" cy="90" r="9" {...fill('accent-soft')} />
+        <text x="70" y="94" fontSize="11" fontWeight="600" {...fill('ink')}>
+          กองทุน RMF
+        </text>
+        <text x="274" y="94" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
+          50,000
+        </text>
+        <rect x="70" y="102" width="204" height="5" rx="2.5" {...fill('line')} />
+        <rect x="70" y="102" width="51" height="5" rx="2.5" {...fill('accent')} />
+        <text x="70" y="118" fontSize="8.5" {...fill('muted')}>
+          ไม่เกิน 15% ของเงินได้
+        </text>
+        <line x1="50" x2="270" y1="128" y2="128" {...rule} />
+        <circle cx="54" cy="146" r="9" {...fill('refund')} />
+        <path d="M49.5 146l3 3 6-6" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ stroke: 'var(--surface)' }} />
+        <text x="70" y="150" fontSize="11" fontWeight="600" {...fill('ink')}>
+          บุตร 1 คน
+        </text>
+        <text x="274" y="150" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
+          30,000
+        </text>
+      </svg>
+    )
+  }
+
+  if (kind === 'result') {
+    return (
+      <svg {...svgProps}>
+        <rect x="30" y="10" width="260" height="156" rx="14" {...card} />
+        <text x="160" y="32" textAnchor="middle" fontSize="10" {...fill('muted')}>
+          ผลการคำนวณปี 2569
+        </text>
+        <text x="160" y="74" textAnchor="middle" fontSize="30" fontWeight="800" {...fill('refund')}>
+          ฿7,550
+        </text>
+        <text x="160" y="92" textAnchor="middle" fontSize="11" {...fill('muted')}>
+          ได้คืนภาษี
+        </text>
+        <line x1="50" x2="270" y1="104" y2="104" {...rule} />
+        <rect x="50" y="116" width="220" height="32" rx="16" {...fill('accent-soft')} />
+        <circle cx="70" cy="132" r="8" {...fill('accent')} />
+        <text x="70" y="136" textAnchor="middle" fontSize="11" fontWeight="800" {...fill('accent-ink')}>
+          !
+        </text>
+        <text x="86" y="136" fontSize="10.5" fontWeight="700" {...fill('accent')}>
+          ต้องยื่นแบบ ภ.ง.ด.91
+        </text>
+      </svg>
+    )
+  }
+
+  // หน้าแรก: โลโก้แอปและจุดเด่นสองข้อ
+  return (
+    <svg {...svgProps}>
+      <rect x="118" y="14" width="84" height="84" rx="24" {...fill('accent')} />
+      <rect x="134" y="62" width="14" height="22" rx="4" {...fill('accent-ink')} />
+      <rect x="153" y="46" width="14" height="38" rx="4" {...fill('accent-ink')} />
+      <rect x="172" y="30" width="14" height="54" rx="4" {...fill('accent-ink')} />
+      <text x="160" y="126" textAnchor="middle" fontSize="18" fontWeight="700" {...fill('ink')}>
+        ภาษีง่ายๆ
+      </text>
+      <rect x="24" y="138" width="132" height="24" rx="12" {...fill('accent-soft')} />
+      <text x="90" y="154" textAnchor="middle" fontSize="10.5" fontWeight="600" {...fill('accent')}>
+        ไม่ต้องสมัครสมาชิก
+      </text>
+      <rect x="164" y="138" width="132" height="24" rx="12" {...fill('accent-soft')} />
+      <text x="230" y="154" textAnchor="middle" fontSize="10.5" fontWeight="600" {...fill('accent')}>
+        ข้อมูลอยู่ในเครื่องคุณ
+      </text>
+    </svg>
+  )
+}
 
 /** คำแนะนำการใช้งาน 4 หน้า เปิดอัตโนมัติตอนเข้าแอปครั้งแรก และเปิดซ้ำได้จากเมนูเพิ่มเติม */
 export function Onboarding({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -94,7 +228,7 @@ export function Onboarding({ open, onClose }: { open: boolean; onClose: () => vo
 
         <div key={step} className="anim-fade flex flex-col items-center gap-4 pt-3 text-center">
           <div className="grid h-44 w-full place-items-center overflow-hidden rounded-3xl bg-accent-soft/60">
-            <Art name={slide.art} alt="" className="h-full w-full object-contain p-2" />
+            <SlideArt kind={slide.kind} />
           </div>
           <h2 className="font-display text-xl font-semibold">{titleText}</h2>
           <p className="text-[15px] leading-relaxed text-muted">{bodyText}</p>
