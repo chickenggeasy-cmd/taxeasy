@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useT } from '../lib/lang'
 import { readJSON, writeJSON } from '../lib/storage'
+import { Art, type ArtName } from './Art'
 
 export const ONBOARDING_KEY = 'taxeasy:onboarded'
 
@@ -10,6 +11,22 @@ export function hasOnboarded(): boolean {
 }
 
 type SlideKind = 'welcome' | 'income' | 'deductions' | 'result'
+
+/** ไฟล์ภาพใน images/ ของแต่ละหน้า (ถ้าหายไปจะใช้ภาพ SVG วาดเองแทน) */
+const SLIDE_ART: Record<SlideKind, ArtName> = {
+  welcome: 'onb-welcome',
+  income: 'onb-income',
+  deductions: 'onb-deductions',
+  result: 'onb-result',
+}
+
+/** สีพื้นของภาพแต่ละหน้า ให้กรอบกลมกลืนกับขอบภาพ (ภาพเป็นพื้นอ่อนทั้งโหมดสว่างและมืด) */
+const PANEL_BG: Record<SlideKind, string> = {
+  welcome: '#edeffe',
+  income: '#e6ebfd',
+  deductions: '#eaedfe',
+  result: '#e8ebfd',
+}
 
 const SLIDES: { kind: SlideKind; th: [string, string]; en: [string, string] }[] = [
   {
@@ -57,7 +74,7 @@ const rule = { style: { stroke: 'var(--line)' } }
  * ข้อความในภาพเป็นตัวอย่างเดียวกับข้อมูลตัวอย่างในแอป
  */
 function SlideArt({ kind }: { kind: SlideKind }) {
-  const svgProps = { viewBox: '0 0 320 176', className: 'h-full w-full', 'aria-hidden': true }
+  const svgProps = { viewBox: '0 0 320 176', className: 'h-44 w-full', 'aria-hidden': true }
 
   if (kind === 'income') {
     return (
@@ -227,8 +244,8 @@ export function Onboarding({ open, onClose }: { open: boolean; onClose: () => vo
         </div>
 
         <div key={step} className="anim-fade flex flex-col items-center gap-4 pt-3 text-center">
-          <div className="grid h-44 w-full place-items-center overflow-hidden rounded-3xl bg-accent-soft/60">
-            <SlideArt kind={slide.kind} />
+          <div className="grid h-44 w-full place-items-center overflow-hidden rounded-3xl" style={{ background: PANEL_BG[slide.kind] }}>
+            <Art name={SLIDE_ART[slide.kind]} alt="" className="h-44 w-full object-contain" fallback={<SlideArt kind={slide.kind} />} />
           </div>
           <h2 className="font-display text-xl font-semibold">{titleText}</h2>
           <p className="text-[15px] leading-relaxed text-muted">{bodyText}</p>

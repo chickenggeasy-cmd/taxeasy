@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 
-export type ArtName = 'hero' | 'refund' | 'empty' | 'assistant' | 'income' | 'deductions' | 'plan' | 'more'
+export type ArtName = 'hero' | 'refund' | 'empty' | 'assistant' | 'income' | 'deductions' | 'plan' | 'more' | 'onb-welcome' | 'onb-income' | 'onb-deductions' | 'onb-result'
 
 /** ลองนามสกุลตามลำดับ: .webp ก่อน ถ้าไม่มีจะลอง .png (วางไฟล์ PNG จาก GPT ได้เลยไม่ต้องแปลง) */
 const EXTENSIONS = ['webp', 'png'] as const
