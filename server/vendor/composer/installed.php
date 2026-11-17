@@ -3,7 +3,7 @@
         'name' => 'taxeasy/server',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '65e855a0d3011fc9283acea2f70d7bca745cb3fe',
+        'reference' => 'b45ff97af853390097f99ac49732e3d413144f41',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -154,7 +154,7 @@
         'taxeasy/server' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '65e855a0d3011fc9283acea2f70d7bca745cb3fe',
+            'reference' => 'b45ff97af853390097f99ac49732e3d413144f41',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
