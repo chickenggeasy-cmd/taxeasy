@@ -1,7 +1,8 @@
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { filingRequirement } from './filing'
 import { fmt, pct } from './format'
-import { NO_PHP_MESSAGE, readApiJson } from './server'
+import type { Lang } from './lang'
+import { BilingualError, NO_PHP_MESSAGE, readApiJson } from './server'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -22,19 +23,21 @@ export async function checkAssistant(): Promise<AssistantStatus> {
   }
 }
 
-export async function askAssistant(taxYear: number, messages: ChatMessage[], context: string | null): Promise<string> {
+/** ถามน้องภาษี: lang บอกเซิร์ฟเวอร์ว่าให้ตอบภาษาอะไร */
+export async function askAssistant(taxYear: number, messages: ChatMessage[], context: string | null, lang: Lang = 'th'): Promise<string> {
   let res: Response
   try {
     res = await fetch('./api/chat.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taxYear, messages, context: context ?? '' }),
+      body: JSON.stringify({ taxYear, messages, context: context ?? '', lang }),
     })
   } catch {
-    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่')
+    throw new BilingualError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่', 'Could not reach the server. Check your internet connection and try again.')
   }
-  const data = (await res.json().catch(() => ({}))) as { ok?: boolean; reply?: string; error?: string }
-  if (!res.ok || !data.ok || !data.reply) throw new Error(data.error ?? 'AI ตอบไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง')
+  const data = (await res.json().catch(() => ({}))) as { ok?: boolean; reply?: string; error?: string; errorEn?: string }
+  if (!res.ok || !data.ok || !data.reply)
+    throw new BilingualError(data.error ?? 'AI ตอบไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง', data.errorEn ?? "The AI can't answer right now. Please try again.")
   return data.reply
 }
 
@@ -67,9 +70,9 @@ export function buildContext(input: TaxInput, result: TaxResult, rules: TaxRules
   return lines.join('\n')
 }
 
-export const SUGGESTIONS = [
-  'ทำไมฉันได้คืน/ต้องจ่ายเพิ่มเท่านี้',
-  'ควรซื้อ RMF หรือ ThaiESG เท่าไหร่ดี',
-  'ยื่นภาษีต้องใช้เอกสารอะไรบ้าง',
-  'ฉันยังขาดสิทธิลดหย่อนอะไรไปบ้าง',
+export const SUGGESTIONS: [string, string][] = [
+  ['ทำไมฉันได้คืน/ต้องจ่ายเพิ่มเท่านี้', 'Why is my refund or amount due this much?'],
+  ['ควรซื้อ RMF หรือ ThaiESG เท่าไหร่ดี', 'How much RMF or ThaiESG should I buy?'],
+  ['ยื่นภาษีต้องใช้เอกสารอะไรบ้าง', 'What documents do I need to file?'],
+  ['ฉันยังขาดสิทธิลดหย่อนอะไรไปบ้าง', 'Which deductions am I still missing?'],
 ]

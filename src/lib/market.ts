@@ -1,4 +1,4 @@
-import { readApiJson } from './server'
+import { BilingualError, readApiJson } from './server'
 
 export type MarketRange = '1d' | '1mo' | '6mo' | '1y'
 
@@ -30,7 +30,7 @@ export async function fetchMarket(range: MarketRange): Promise<MarketData> {
   if (__PREVIEW__) return sampleMarket(range)
   const res = await fetch(`./api/market.php?range=${range}`, { cache: 'no-store' })
   const data = await readApiJson<Partial<MarketData> & { ok?: boolean; error?: string }>(res)
-  if (!res.ok || !data.ok || !data.items?.length) throw new Error(data.error ?? 'ดึงข้อมูลตลาดไม่ได้')
+  if (!res.ok || !data.ok || !data.items?.length) throw new BilingualError(data.error ?? 'ดึงข้อมูลตลาดไม่ได้', 'Could not load market data. Try again shortly.')
   return data as MarketData
 }
 

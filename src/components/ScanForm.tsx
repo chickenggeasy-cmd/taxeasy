@@ -3,6 +3,7 @@ import type { TaxInput, TaxRules } from '../engine/types'
 import { checkAssistant } from '../lib/assistant'
 import { fmt } from '../lib/format'
 import { useT } from '../lib/lang'
+import { errorEn } from '../lib/server'
 import { scanForm, type ScanResult } from '../lib/scan'
 import { Icon } from './icons'
 import { MoneyField, Segmented } from './ui'
@@ -15,7 +16,7 @@ export function ScanForm({ input, rules, update, onPrivacy }: { input: TaxInput;
   const t = useT()
   const [available, setAvailable] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<{ th: string; en: string } | null>(null)
   const [scan, setScan] = useState<ScanResult | null>(null)
   const [fields, setFields] = useState<Fields | null>(null)
   const [mode, setMode] = useState<'replace' | 'add'>('replace')
@@ -35,7 +36,7 @@ export function ScanForm({ input, rules, update, onPrivacy }: { input: TaxInput;
   const pick = async (f: File | undefined) => {
     if (!f) return
     setBusy(true)
-    setError('')
+    setError(null)
     setDone(false)
     try {
       const r = await scanForm(f)
@@ -44,7 +45,7 @@ export function ScanForm({ input, rules, update, onPrivacy }: { input: TaxInput;
       setFields({ salary: r.salary, withheld: r.withheld, socialSecurity: r.socialSecurity, providentFund: r.providentFund })
       setMode(input.income.salary > 0 ? 'add' : 'replace')
     } catch (e) {
-      setError((e as Error).message)
+      setError({ th: (e as Error).message, en: errorEn(e) })
     } finally {
       setBusy(false)
       if (file.current) file.current.value = ''
@@ -93,7 +94,7 @@ export function ScanForm({ input, rules, update, onPrivacy }: { input: TaxInput;
       )}
       {error && (
         <p role="alert" className="rounded-2xl bg-due-soft px-4 py-3 text-sm text-due">
-          {error}
+          {t(error.th, error.en)}
         </p>
       )}
       {done && (

@@ -261,7 +261,7 @@ export function Summary({
             {online >= 0 && online <= 200 ? t(` (อีก ${online} วัน)`, ` (${online} days left)`) : ''} · {t('แบบกระดาษถึง', 'Paper filing until')} {dateText(rules.filingDeadlines.paper, lang)}
           </p>
           {!__PREVIEW__ && (
-            <button type="button" onClick={() => downloadIcs(rules)} className="shrink-0 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent">
+            <button type="button" onClick={() => downloadIcs(rules, lang)} className="shrink-0 rounded-xl bg-accent-soft px-3 py-2 text-sm font-semibold text-accent">
               {t('เพิ่มลงปฏิทิน', 'Add to calendar')}
             </button>
           )}

@@ -11,12 +11,13 @@ import { useLang, useT } from '../lib/lang'
 import { readJSON, writeJSON } from '../lib/storage'
 
 function CopyButton({ value }: { value: number }) {
+  const t = useT()
   const [done, setDone] = useState(false)
   const text = String(Math.round(value * 100) / 100)
   return (
     <button
       type="button"
-      aria-label={`คัดลอก ${fmt(value)}`}
+      aria-label={t(`คัดลอก ${fmt(value)}`, `Copy ${fmt(value)}`)}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text)
@@ -28,7 +29,7 @@ function CopyButton({ value }: { value: number }) {
       }}
       className={`shrink-0 rounded-lg px-2 py-1 text-xs font-semibold ${done ? 'bg-refund-soft text-refund' : 'bg-paper text-muted hover:text-ink'}`}
     >
-      {done ? 'คัดลอกแล้ว' : 'คัดลอก'}
+      {done ? t('คัดลอกแล้ว', 'Copied') : t('คัดลอก', 'Copy')}
     </button>
   )
 }
@@ -48,9 +49,9 @@ export function Filing({
 }) {
   const t = useT()
   const lang = useLang()
-  const steps = filingSteps(input, result, rules)
+  const steps = filingSteps(input, result, rules, lang)
   const filing = filingRequirement(input, result, rules)
-  const docs = documentChecklist(input, rules)
+  const docs = documentChecklist(input, rules, lang)
   const docsKey = `taxeasy:docs:${rules.taxYear}`
   const [checked, setChecked] = useState<Record<string, boolean>>(() => readJSON(docsKey) ?? {})
   const done = docs.filter((d) => checked[d.id]).length
@@ -71,18 +72,18 @@ export function Filing({
         title={t('ยื่นภาษีจริง', 'File your return')}
         subtitle={
           lang === 'en'
-            ? `Form ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · online until ${dateText(rules.filingDeadlines.online, lang)}`
+            ? `Form ${formType(input) === 'PND91' ? 'P.N.D. 91' : 'P.N.D. 90'} · online until ${dateText(rules.filingDeadlines.online, lang)}`
             : `แบบ ${formType(input) === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90'} · ยื่นออนไลน์ได้ถึง ${dateText(rules.filingDeadlines.online, lang)}`
         }
       />
       {filing && <FilingNotice filing={filing} />}
 
       {!__PREVIEW__ && (
-        <button type="button" onClick={() => downloadIcs(rules)} className="card flex items-center gap-3 rounded-2xl px-4 py-3 text-left">
+        <button type="button" onClick={() => downloadIcs(rules, lang)} className="card flex items-center gap-3 rounded-2xl px-4 py-3 text-left">
           <IconTile name="calendar" size={36} />
           <span className="min-w-0 flex-1">
-            <span className="block font-semibold">เพิ่มวันครบกำหนดลงปฏิทิน</span>
-            <span className="block text-sm text-muted">ปฏิทินในมือถือจะเตือนล่วงหน้า 7 วัน และ 1 วัน</span>
+            <span className="block font-semibold">{t('เพิ่มวันครบกำหนดลงปฏิทิน', 'Add the deadline to your calendar')}</span>
+            <span className="block text-sm text-muted">{t('ปฏิทินในมือถือจะเตือนล่วงหน้า 7 วัน และ 1 วัน', 'Your phone calendar will remind you 7 days and 1 day before')}</span>
           </span>
           <span aria-hidden className="text-xl text-muted">+</span>
         </button>
@@ -92,9 +93,9 @@ export function Filing({
         <div className="mb-3 flex items-center gap-3">
           <IconTile name="receipt" />
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-semibold">เตรียมเอกสาร</h2>
+            <h2 className="text-lg font-semibold">{t('เตรียมเอกสาร', 'Documents to prepare')}</h2>
             <p className="num text-sm text-muted">
-              เตรียมแล้ว {done} จาก {docs.length} รายการ
+              {t(`เตรียมแล้ว ${done} จาก ${docs.length} รายการ`, `${done} of ${docs.length} ready`)}
             </p>
           </div>
         </div>
@@ -114,7 +115,9 @@ export function Filing({
             </li>
           ))}
         </ul>
-        <p className="mt-2 px-2 text-xs text-muted">เก็บเอกสารทั้งหมดไว้อย่างน้อย 5 ปี เผื่อกรมสรรพากรขอตรวจ</p>
+        <p className="mt-2 px-2 text-xs text-muted">
+          {t('เก็บเอกสารทั้งหมดไว้อย่างน้อย 5 ปี เผื่อกรมสรรพากรขอตรวจ', 'Keep all documents for at least 5 years in case the Revenue Department asks to see them.')}
+        </p>
       </section>
 
       <ol className="flex flex-col gap-4">
@@ -158,7 +161,12 @@ export function Filing({
         <Icon name="send" size={20} />
         {t('เปิดเว็บ e-Filing ของกรมสรรพากร', 'Open the Revenue Department e-Filing site')}
       </a>
-      <p className="px-1 text-xs text-muted">ชื่อช่องในระบบ e-Filing อาจต่างจากที่แสดงเล็กน้อย และระบบอาจเติมข้อมูลบางส่วนให้เอง เช่น เงินเดือนจากนายจ้าง หรือเงินบริจาคผ่าน e-Donation</p>
+      <p className="px-1 text-xs text-muted">
+        {t(
+          'ชื่อช่องในระบบ e-Filing อาจต่างจากที่แสดงเล็กน้อย และระบบอาจเติมข้อมูลบางส่วนให้เอง เช่น เงินเดือนจากนายจ้าง หรือเงินบริจาคผ่าน e-Donation',
+          'Box names in e-Filing may differ slightly from these, and the system may fill some figures in for you, such as salary from your employer or e-Donation donations.',
+        )}
+      </p>
 
       <FiledCompare result={result} onFeedback={onFeedback} />
     </div>

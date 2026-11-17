@@ -1,6 +1,8 @@
 // วาดการ์ดสรุปภาษีเป็นรูป PNG สำหรับแชร์ (ไม่ส่งข้อมูลออกจากเครื่อง)
 import type { TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from './format'
+import type { Lang } from './lang'
+import { BilingualError } from './server'
 
 const W = 1080
 const H = 1350
@@ -44,7 +46,8 @@ function fit(ctx: CanvasRenderingContext2D, text: string, weight: number, size: 
   } while (s > 24)
 }
 
-export async function renderShareCard(result: TaxResult, rules: TaxRules, hideAmounts: boolean): Promise<Blob> {
+export async function renderShareCard(result: TaxResult, rules: TaxRules, hideAmounts: boolean, lang: Lang = 'th'): Promise<Blob> {
+  const t = (th: string, en: string) => (lang === 'en' ? en : th)
   await document.fonts?.ready
   const canvas = document.createElement('canvas')
   canvas.width = W
@@ -76,10 +79,10 @@ export async function renderShareCard(result: TaxResult, rules: TaxRules, hideAm
   ctx.fillStyle = C.ink
   ctx.font = `600 52px ${DISPLAY}`
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText('ภาษีง่ายๆ', logo ? 200 : 80, 140)
+  ctx.fillText(t('ภาษีง่ายๆ', 'TaxEasy'), logo ? 200 : 80, 140)
   ctx.fillStyle = C.muted
   ctx.font = `400 32px ${BODY}`
-  ctx.fillText(`สรุปภาษีเงินได้ ปีภาษี ${rules.taxYear}`, logo ? 200 : 80, 182)
+  ctx.fillText(t(`สรุปภาษีเงินได้ ปีภาษี ${rules.taxYear}`, `Income tax summary · tax year ${rules.taxYear}`), logo ? 200 : 80, 182)
 
   // การ์ดผลลัพธ์หลัก
   const cardY = 250
@@ -88,27 +91,36 @@ export async function renderShareCard(result: TaxResult, rules: TaxRules, hideAm
   ctx.fill()
   ctx.fillStyle = tone.fg
   ctx.font = `600 44px ${BODY}`
-  ctx.fillText(zero ? '● ไม่ต้องจ่ายเพิ่ม ไม่มีเงินคืน' : refund ? '▲ ฉันจะได้เงินภาษีคืน' : '▼ ต้องจ่ายภาษีเพิ่ม', 120, cardY + 110)
-  const big = hideAmounts ? (zero ? 'สบาย ๆ' : refund ? 'ได้คืน!' : 'วางแผนแล้ว') : `฿${fmt(Math.abs(result.balance))}`
+  ctx.fillText(
+    zero ? t('● ไม่ต้องจ่ายเพิ่ม ไม่มีเงินคืน', '● Nothing to pay, no refund') : refund ? t('▲ ฉันจะได้เงินภาษีคืน', "▲ I'm getting a tax refund") : t('▼ ต้องจ่ายภาษีเพิ่ม', '▼ I owe more tax'),
+    120,
+    cardY + 110,
+  )
+  const big = hideAmounts
+    ? zero
+      ? t('สบาย ๆ', 'All clear')
+      : refund
+        ? t('ได้คืน!', 'Refund!')
+        : t('วางแผนแล้ว', 'Planned')
+    : `฿${fmt(Math.abs(result.balance))}`
   fit(ctx, big, 600, 176, DISPLAY, W - 240)
   ctx.fillText(big, 116, cardY + 310)
   ctx.fillStyle = C.ink
-  ctx.font = `400 34px ${BODY}`
-  ctx.fillText(
-    hideAmounts ? 'คำนวณแล้วด้วยแอป ภาษีง่ายๆ' : `ภาษีทั้งปี ${fmt(result.tax)} บาท · จ่ายไปแล้ว ${fmt(result.credits)} บาท`,
-    120,
-    cardY + 400,
-  )
+  const detail = hideAmounts
+    ? t('คำนวณแล้วด้วยแอป ภาษีง่ายๆ', 'Worked out with the TaxEasy app')
+    : t(`ภาษีทั้งปี ${fmt(result.tax)} บาท · จ่ายไปแล้ว ${fmt(result.credits)} บาท`, `Tax for the year ${fmt(result.tax)} baht · already paid ${fmt(result.credits)} baht`)
+  fit(ctx, detail, 400, 34, BODY, W - 240)
+  ctx.fillText(detail, 120, cardY + 400)
 
   // ตัวเลขย่อย 2 ช่อง
   const tiles = [
-    { label: 'อัตราภาษีจริง', value: pct(result.effectiveRate) },
-    { label: 'ฐานภาษีสูงสุด', value: pct(result.marginalRate) },
+    { label: t('อัตราภาษีจริง', 'Effective rate'), value: pct(result.effectiveRate) },
+    { label: t('ฐานภาษีสูงสุด', 'Top bracket'), value: pct(result.marginalRate) },
   ]
-  if (!hideAmounts) tiles.push({ label: 'ใช้สิทธิลดหย่อน', value: `${fmt(result.totalDeductions)}` })
+  if (!hideAmounts) tiles.push({ label: t('ใช้สิทธิลดหย่อน', 'Deductions'), value: `${fmt(result.totalDeductions)}` })
   const gap = 28
   const tw = (W - 128 - gap * (tiles.length - 1)) / tiles.length
-  tiles.forEach((t, i) => {
+  tiles.forEach((tile, i) => {
     const x = 64 + i * (tw + gap)
     const y = cardY + 520
     roundRect(ctx, x, y, tw, 210, 40)
@@ -119,29 +131,30 @@ export async function renderShareCard(result: TaxResult, rules: TaxRules, hideAm
     ctx.stroke()
     ctx.fillStyle = C.muted
     ctx.font = `400 30px ${BODY}`
-    ctx.fillText(t.label, x + 36, y + 70)
+    fit(ctx, tile.label, 400, 30, BODY, tw - 72)
+    ctx.fillText(tile.label, x + 36, y + 70)
     ctx.fillStyle = C.ink
-    fit(ctx, t.value, 600, 72, DISPLAY, tw - 72)
-    ctx.fillText(t.value, x + 36, y + 160)
+    fit(ctx, tile.value, 600, 72, DISPLAY, tw - 72)
+    ctx.fillText(tile.value, x + 36, y + 160)
   })
 
   // ท้าย
   ctx.fillStyle = C.accent
   ctx.font = `600 36px ${BODY}`
-  ctx.fillText('ยื่นภาษีออนไลน์ทันกำหนด · ลดหย่อนครบทุกสิทธิ', 80, H - 150)
+  ctx.fillText(t('ยื่นภาษีออนไลน์ทันกำหนด · ลดหย่อนครบทุกสิทธิ', 'File online on time · claim every deduction'), 80, H - 150)
   ctx.fillStyle = C.muted
   ctx.font = `400 26px ${BODY}`
-  ctx.fillText('ตัวเลขประมาณการจากข้อมูลที่กรอก ไม่ใช่เอกสารทางการ', 80, H - 96)
+  ctx.fillText(t('ตัวเลขประมาณการจากข้อมูลที่กรอก ไม่ใช่เอกสารทางการ', 'An estimate from the figures entered, not an official document'), 80, H - 96)
 
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('สร้างรูปไม่สำเร็จ'))), 'image/png'))
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new BilingualError('สร้างรูปไม่สำเร็จ', 'Could not create the image'))), 'image/png'))
 }
 
 /** แชร์ผ่านแอปในมือถือถ้าทำได้ ไม่งั้นดาวน์โหลดรูป */
-export async function shareOrDownload(blob: Blob, filename: string): Promise<'shared' | 'downloaded' | 'cancelled'> {
+export async function shareOrDownload(blob: Blob, filename: string, lang: Lang = 'th'): Promise<'shared' | 'downloaded' | 'cancelled'> {
   const file = new File([blob], filename, { type: 'image/png' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: 'สรุปภาษีของฉัน' })
+      await navigator.share({ files: [file], title: lang === 'en' ? 'My tax summary' : 'สรุปภาษีของฉัน' })
       return 'shared'
     } catch (e) {
       if ((e as Error).name === 'AbortError') return 'cancelled'

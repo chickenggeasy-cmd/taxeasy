@@ -1,5 +1,6 @@
 import type { FilingThresholds, TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt } from './format'
+import type { Lang } from './lang'
 
 export type FormType = 'PND91' | 'PND90'
 
@@ -31,53 +32,68 @@ export function formType(input: TaxInput): FormType {
   return other > 0 ? 'PND90' : 'PND91'
 }
 
-export function filingSteps(input: TaxInput, result: TaxResult, rules: TaxRules): FilingStep[] {
+export function filingSteps(input: TaxInput, result: TaxResult, rules: TaxRules, lang: Lang = 'th'): FilingStep[] {
+  const t = (th: string, en: string) => (lang === 'en' ? en : th)
   const form = formType(input)
   const p = input.profile
   const steps: FilingStep[] = []
 
   steps.push({
     id: 'form',
-    title: 'เลือกแบบที่จะยื่น',
-    detail: 'เข้าระบบ e-Filing ของกรมสรรพากร ด้วยเลขบัตรประชาชน แล้วเลือกแบบฟอร์ม',
+    title: t('เลือกแบบที่จะยื่น', 'Choose the form'),
+    detail: t(
+      'เข้าระบบ e-Filing ของกรมสรรพากร ด้วยเลขบัตรประชาชน แล้วเลือกแบบฟอร์ม',
+      'Log in to the Revenue Department e-Filing system with your national ID number, then choose the form',
+    ),
     fields: [
       {
-        label: 'แบบที่ต้องใช้',
-        value: form === 'PND91' ? 'ภ.ง.ด.91' : 'ภ.ง.ด.90',
-        note: form === 'PND91' ? 'มีเงินเดือน/ค่าจ้างอย่างเดียว' : 'มีเงินได้ประเภทอื่นนอกจากเงินเดือน',
+        label: t('แบบที่ต้องใช้', 'Form to use'),
+        value: lang === 'en' ? FORM_LABEL_EN[form] : FORM_LABEL[form],
+        note: form === 'PND91' ? t('มีเงินเดือน/ค่าจ้างอย่างเดียว', 'Salary or wages only') : t('มีเงินได้ประเภทอื่นนอกจากเงินเดือน', 'You have income other than salary'),
       },
-      { label: 'ปีภาษี', value: String(rules.taxYear) },
+      { label: t('ปีภาษี', 'Tax year'), value: String(rules.taxYear) },
     ],
   })
 
   steps.push({
     id: 'status',
-    title: 'ข้อมูลผู้ยื่น',
+    title: t('ข้อมูลผู้ยื่น', 'Your details'),
     fields: [
       {
-        label: 'สถานภาพ',
-        value: !p.married ? 'โสด / หม้าย / หย่า' : p.spouseHasIncome ? 'สมรส (คู่สมรสมีเงินได้ แยกยื่น)' : 'สมรส (คู่สมรสไม่มีเงินได้)',
+        label: t('สถานภาพ', 'Marital status'),
+        value: !p.married
+          ? t('โสด / หม้าย / หย่า', 'Single / widowed / divorced')
+          : p.spouseHasIncome
+            ? t('สมรส (คู่สมรสมีเงินได้ แยกยื่น)', 'Married (spouse has income, filing separately)')
+            : t('สมรส (คู่สมรสไม่มีเงินได้)', 'Married (spouse has no income)'),
       },
-      ...(p.elderlyOrDisabled ? [{ label: 'ผู้มีอายุ 65 ปีขึ้นไป / ผู้พิการ', value: 'ติ๊กช่องนี้ ระบบจะยกเว้นเงินได้ให้' }] : []),
+      ...(p.elderlyOrDisabled
+        ? [{ label: t('ผู้มีอายุ 65 ปีขึ้นไป / ผู้พิการ', 'Aged 65 or over / person with a disability'), value: t('ติ๊กช่องนี้ ระบบจะยกเว้นเงินได้ให้', 'Tick this box and the exemption is applied') }]
+        : []),
     ],
   })
 
   const incomeFields: FilingField[] = result.incomes.map((l) => ({
-    label: l.label,
+    label: lang === 'en' ? l.labelEn : l.label,
     amount: l.gross,
-    note: l.id === '40-1-2' ? 'ดูยอดในหนังสือรับรอง 50 ทวิ' : undefined,
+    note: l.id === '40-1-2' ? t('ดูยอดในหนังสือรับรอง 50 ทวิ', 'Shown on the 50 Tawi certificate') : undefined,
   }))
+  const chooseActual = t('เลือก “หักตามจริง” ในระบบ', 'Choose “actual expenses” in the system')
   if (input.income.business.amount > 0 && input.income.business.useActual) {
-    incomeFields.push({ label: 'ค่าใช้จ่าย 40(8) แบบหักตามจริง', amount: input.income.business.actualExpense, note: 'เลือก “หักตามจริง” ในระบบ' })
+    incomeFields.push({ label: t('ค่าใช้จ่าย 40(8) แบบหักตามจริง', 'Actual expenses for 40(8)'), amount: input.income.business.actualExpense, note: chooseActual })
   }
   if (input.income.contract.amount > 0 && input.income.contract.useActual) {
-    incomeFields.push({ label: 'ค่าใช้จ่าย 40(7) แบบหักตามจริง', amount: input.income.contract.actualExpense, note: 'เลือก “หักตามจริง” ในระบบ' })
+    incomeFields.push({ label: t('ค่าใช้จ่าย 40(7) แบบหักตามจริง', 'Actual expenses for 40(7)'), amount: input.income.contract.actualExpense, note: chooseActual })
   }
-  incomeFields.push({ label: 'ภาษีที่ถูกหัก ณ ที่จ่ายทั้งหมด', amount: input.credits.withheld, note: 'กรอกแยกตามแต่ละใบ 50 ทวิ ในช่องของเงินได้นั้น ๆ' })
+  incomeFields.push({
+    label: t('ภาษีที่ถูกหัก ณ ที่จ่ายทั้งหมด', 'Total tax withheld'),
+    amount: input.credits.withheld,
+    note: t('กรอกแยกตามแต่ละใบ 50 ทวิ ในช่องของเงินได้นั้น ๆ', 'Enter it per 50 Tawi certificate, in the box for that income'),
+  })
   steps.push({
     id: 'income',
-    title: 'กรอกเงินได้',
-    detail: 'ระบบหักค่าใช้จ่ายให้เองตามประเภทเงินได้',
+    title: t('กรอกเงินได้', 'Enter your income'),
+    detail: t('ระบบหักค่าใช้จ่ายให้เองตามประเภทเงินได้', 'The system applies expense allowances by income type'),
     fields: incomeFields,
   })
 
@@ -86,36 +102,83 @@ export function filingSteps(input: TaxInput, result: TaxResult, rules: TaxRules)
   const deductionFields: FilingField[] = result.deductions
     .filter((d) => !skip.has(d.id) && d.allowed > 0)
     .map((d) => {
-      if (d.id === 'spouse') return { label: d.label, value: 'ระบบเติมให้เมื่อเลือกสถานภาพ' }
-      if (d.id === 'children') return { label: 'บุตร', value: `${input.deductions.children.length} คน`, note: 'กรอกเลขบัตรประชาชนและปีเกิดของบุตรแต่ละคน' }
-      if (d.id === 'parents') return { label: 'อุปการะบิดามารดา', value: `${input.deductions.parents} คน`, note: 'กรอกเลขบัตรประชาชนของบิดามารดา' }
-      if (d.id === 'disabledCare') return { label: 'อุปการะผู้พิการ', value: `${input.deductions.disabledCare} คน` }
-      return { label: d.label, amount: d.claimed, note: d.claimed > d.allowed ? `ใช้สิทธิได้ ${Math.round(d.allowed).toLocaleString()} บาท ระบบคิดเพดานให้เอง` : undefined }
+      const label = lang === 'en' ? d.labelEn : d.label
+      if (d.id === 'spouse') return { label, value: t('ระบบเติมให้เมื่อเลือกสถานภาพ', 'Filled in once you choose your status') }
+      if (d.id === 'children')
+        return {
+          label: t('บุตร', 'Children'),
+          value: t(`${input.deductions.children.length} คน`, String(input.deductions.children.length)),
+          note: t('กรอกเลขบัตรประชาชนและปีเกิดของบุตรแต่ละคน', "Enter each child's national ID number and year of birth"),
+        }
+      if (d.id === 'parents')
+        return {
+          label: t('อุปการะบิดามารดา', 'Parents supported'),
+          value: t(`${input.deductions.parents} คน`, String(input.deductions.parents)),
+          note: t('กรอกเลขบัตรประชาชนของบิดามารดา', "Enter your parents' national ID numbers"),
+        }
+      if (d.id === 'disabledCare')
+        return { label: t('อุปการะผู้พิการ', 'Disabled dependants supported'), value: t(`${input.deductions.disabledCare} คน`, String(input.deductions.disabledCare)) }
+      return {
+        label,
+        amount: d.claimed,
+        note:
+          d.claimed > d.allowed
+            ? t(`ใช้สิทธิได้ ${Math.round(d.allowed).toLocaleString()} บาท ระบบคิดเพดานให้เอง`, `Allowed: ${Math.round(d.allowed).toLocaleString()} baht; the system applies the cap`)
+            : undefined,
+      }
     })
   if (deductionFields.length) {
     steps.push({
       id: 'deductions',
-      title: 'กรอกค่าลดหย่อน',
-      detail: 'กรอกยอดที่จ่ายจริงตามหลักฐาน ค่าลดหย่อนส่วนตัว 60,000 บาท ระบบใส่ให้เอง',
+      title: t('กรอกค่าลดหย่อน', 'Enter your deductions'),
+      detail: t(
+        'กรอกยอดที่จ่ายจริงตามหลักฐาน ค่าลดหย่อนส่วนตัว 60,000 บาท ระบบใส่ให้เอง',
+        'Enter what you actually paid, as shown on your evidence. The 60,000 baht personal allowance is added for you.',
+      ),
       fields: deductionFields,
     })
   }
 
   const donations: FilingField[] = []
-  if (input.deductions.donationEducation > 0) donations.push({ label: 'เงินบริจาคการศึกษา/กีฬา/โรงพยาบาลรัฐ', amount: input.deductions.donationEducation, note: 'ส่วนใหญ่ระบบดึงจาก e-Donation ให้เอง ตรวจยอดให้ตรง' })
-  if (input.deductions.donationGeneral > 0) donations.push({ label: 'เงินบริจาคทั่วไป', amount: input.deductions.donationGeneral })
-  if (donations.length) steps.push({ id: 'donations', title: 'กรอกเงินบริจาค', fields: donations })
+  if (input.deductions.donationEducation > 0)
+    donations.push({
+      label: t('เงินบริจาคการศึกษา/กีฬา/โรงพยาบาลรัฐ', 'Education / sports / public hospital donations'),
+      amount: input.deductions.donationEducation,
+      note: t('ส่วนใหญ่ระบบดึงจาก e-Donation ให้เอง ตรวจยอดให้ตรง', 'Usually pulled in from e-Donation; check the amount matches'),
+    })
+  if (input.deductions.donationGeneral > 0) donations.push({ label: t('เงินบริจาคทั่วไป', 'General donations'), amount: input.deductions.donationGeneral })
+  if (donations.length) steps.push({ id: 'donations', title: t('กรอกเงินบริจาค', 'Enter donations'), fields: donations })
 
   steps.push({
     id: 'check',
-    title: 'ตรวจผลก่อนกดยื่น',
-    detail: 'ตัวเลขในระบบควรใกล้เคียงกับที่ภาษีง่ายๆ คำนวณ ถ้าต่างกันมาก ให้ย้อนตรวจช่องที่กรอก',
+    title: t('ตรวจผลก่อนกดยื่น', 'Check before you submit'),
+    detail: t(
+      'ตัวเลขในระบบควรใกล้เคียงกับที่ภาษีง่ายๆ คำนวณ ถ้าต่างกันมาก ให้ย้อนตรวจช่องที่กรอก',
+      "The system's figures should be close to TaxEasy's. If they differ a lot, go back and check what you entered.",
+    ),
     fields: [
-      { label: 'เงินได้สุทธิ', amount: result.netIncome },
-      { label: 'ภาษีที่คำนวณได้', amount: result.tax },
+      { label: t('เงินได้สุทธิ', 'Net taxable income'), amount: result.netIncome },
+      { label: t('ภาษีที่คำนวณได้', 'Tax calculated'), amount: result.tax },
       result.balance < 0
-        ? { label: 'ชำระไว้เกิน (ได้คืน)', amount: -result.balance, note: 'เงินคืนจะโอนเข้าพร้อมเพย์ที่ผูกกับเลขบัตรประชาชน ผูกไว้ก่อนยื่น' }
-        : { label: 'ภาษีที่ต้องชำระเพิ่ม', amount: result.balance, note: result.balance > 0 ? 'ชำระได้ทางธนาคาร พร้อมเพย์ หรือบัตรเครดิต ถ้าภาษีตั้งแต่ 3,000 บาทและยื่นตรงเวลา ผ่อนชำระได้ 3 งวด' : undefined },
+        ? {
+            label: t('ชำระไว้เกิน (ได้คืน)', 'Overpaid (refund)'),
+            amount: -result.balance,
+            note: t(
+              'เงินคืนจะโอนเข้าพร้อมเพย์ที่ผูกกับเลขบัตรประชาชน ผูกไว้ก่อนยื่น',
+              'Refunds go to the PromptPay account linked to your national ID number. Link it before you file.',
+            ),
+          }
+        : {
+            label: t('ภาษีที่ต้องชำระเพิ่ม', 'Tax to pay'),
+            amount: result.balance,
+            note:
+              result.balance > 0
+                ? t(
+                    'ชำระได้ทางธนาคาร พร้อมเพย์ หรือบัตรเครดิต ถ้าภาษีตั้งแต่ 3,000 บาทและยื่นตรงเวลา ผ่อนชำระได้ 3 งวด',
+                    'Pay by bank, PromptPay or credit card. If it is 3,000 baht or more and you file on time, you can pay in 3 instalments.',
+                  )
+                : undefined,
+          },
     ],
   })
   return steps
@@ -127,41 +190,111 @@ export interface DocItem {
   detail: string
 }
 
-/** เอกสารที่ควรเตรียม สร้างจากสิ่งที่ผู้ใช้กรอก */
-export function documentChecklist(input: TaxInput, rules: TaxRules): DocItem[] {
+/** เอกสารที่ควรเตรียม สร้างจากสิ่งที่ผู้ใช้กรอก (id เหมือนกันทุกภาษา เพื่อให้รายการที่ติ๊กไว้ไม่หาย) */
+export function documentChecklist(input: TaxInput, rules: TaxRules, lang: Lang = 'th'): DocItem[] {
+  const t = (th: string, en: string) => (lang === 'en' ? en : th)
   const d = input.deductions
   const i = input.income
   const docs: DocItem[] = []
   const add = (cond: boolean, id: string, title: string, detail: string) => cond && docs.push({ id, title, detail })
 
-  add(i.salary > 0, 'pnd50', 'หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) จากนายจ้าง', 'มียอดเงินเดือน ภาษีที่ถูกหัก ประกันสังคม และกองทุนสำรองเลี้ยงชีพ')
-  add(i.freelance + i.professional.medical + i.professional.other + i.contract.amount + i.royalty > 0, 'pnd50-other', '50 ทวิ จากผู้จ้างงานอื่น ๆ', 'ขอจากทุกบริษัทที่จ่ายค่าจ้างฟรีแลนซ์/ค่าวิชาชีพ และหักภาษีไว้')
+  add(
+    i.salary > 0,
+    'pnd50',
+    t('หนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) จากนายจ้าง', 'Withholding tax certificate (50 Tawi) from your employer'),
+    t('มียอดเงินเดือน ภาษีที่ถูกหัก ประกันสังคม และกองทุนสำรองเลี้ยงชีพ', 'Shows salary, tax withheld, social security and provident fund'),
+  )
+  add(
+    i.freelance + i.professional.medical + i.professional.other + i.contract.amount + i.royalty > 0,
+    'pnd50-other',
+    t('50 ทวิ จากผู้จ้างงานอื่น ๆ', '50 Tawi from other payers'),
+    t('ขอจากทุกบริษัทที่จ่ายค่าจ้างฟรีแลนซ์/ค่าวิชาชีพ และหักภาษีไว้', 'Ask every company that paid you freelance or professional fees and withheld tax'),
+  )
   add(
     (i.investment.includeDividends && i.investment.dividends + i.investment.fundDividends > 0) || (i.investment.includeInterest && i.investment.interest > 0),
     'dividend',
-    'หนังสือรับรองการจ่ายเงินปันผล/ดอกเบี้ย',
-    'ขอจากบริษัทหลักทรัพย์ ศูนย์รับฝากหลักทรัพย์ (TSD) หรือธนาคาร ต้องมียอดเครดิตภาษีเงินปันผลระบุไว้',
+    t('หนังสือรับรองการจ่ายเงินปันผล/ดอกเบี้ย', 'Dividend / interest payment certificate'),
+    t(
+      'ขอจากบริษัทหลักทรัพย์ ศูนย์รับฝากหลักทรัพย์ (TSD) หรือธนาคาร ต้องมียอดเครดิตภาษีเงินปันผลระบุไว้',
+      'From your broker, Thailand Securities Depository (TSD) or bank. It must show the dividend tax credit.',
+    ),
   )
-  add(i.foreign.employment + i.foreign.investment > 0, 'foreign', 'หลักฐานเงินได้ต่างประเทศและการโอนเงินเข้าไทย', 'สเตตเมนต์โบรกเกอร์/นายจ้างต่างประเทศ หลักฐานการโอนเข้าไทย และหลักฐานภาษีที่เสียในต่างประเทศ (ถ้าจะขอเครดิต)')
-  add(Object.values(i.rent).some((v) => v > 0), 'rent', 'สัญญาเช่าและหลักฐานรับค่าเช่า', 'ใช้ยืนยันรายได้ค่าเช่าทั้งปี')
-  add(i.business.amount > 0 || i.contract.amount > 0, 'biz', 'บัญชีรายรับ-รายจ่ายของธุรกิจ', i.business.useActual || i.contract.useActual ? 'หักค่าใช้จ่ายตามจริง ต้องเก็บใบเสร็จ/ใบกำกับภาษีค่าใช้จ่ายทุกใบ' : 'แม้หักแบบเหมา ก็ควรมีบันทึกรายรับไว้')
-  add(input.credits.prepaid > 0, 'pnd94', 'แบบ ภ.ง.ด.94 และใบเสร็จภาษีครึ่งปี', 'ใช้หักภาษีที่จ่ายไปแล้วตอนกลางปี')
+  add(
+    i.foreign.employment + i.foreign.investment > 0,
+    'foreign',
+    t('หลักฐานเงินได้ต่างประเทศและการโอนเงินเข้าไทย', 'Evidence of foreign income and transfers into Thailand'),
+    t(
+      'สเตตเมนต์โบรกเกอร์/นายจ้างต่างประเทศ หลักฐานการโอนเข้าไทย และหลักฐานภาษีที่เสียในต่างประเทศ (ถ้าจะขอเครดิต)',
+      'Statements from the foreign broker or employer, proof of transfer into Thailand, and proof of tax paid abroad (if claiming a credit)',
+    ),
+  )
+  add(Object.values(i.rent).some((v) => v > 0), 'rent', t('สัญญาเช่าและหลักฐานรับค่าเช่า', 'Lease agreements and rent receipts'), t('ใช้ยืนยันรายได้ค่าเช่าทั้งปี', 'To support your rental income for the year'))
+  add(
+    i.business.amount > 0 || i.contract.amount > 0,
+    'biz',
+    t('บัญชีรายรับ-รายจ่ายของธุรกิจ', 'Business income and expense records'),
+    i.business.useActual || i.contract.useActual
+      ? t('หักค่าใช้จ่ายตามจริง ต้องเก็บใบเสร็จ/ใบกำกับภาษีค่าใช้จ่ายทุกใบ', 'For actual expenses, keep every expense receipt or tax invoice')
+      : t('แม้หักแบบเหมา ก็ควรมีบันทึกรายรับไว้', 'Even with flat-rate expenses, keep a record of income'),
+  )
+  add(input.credits.prepaid > 0, 'pnd94', t('แบบ ภ.ง.ด.94 และใบเสร็จภาษีครึ่งปี', 'P.N.D. 94 form and the half-year tax receipt'), t('ใช้หักภาษีที่จ่ายไปแล้วตอนกลางปี', 'Used to credit tax already paid mid-year'))
 
-  add(d.parents > 0, 'ly03', 'แบบ ล.ย.03 และเลขบัตรประชาชนบิดามารดา', 'บิดามารดาอายุ 60 ปีขึ้นไป และมีเงินได้ไม่เกิน 30,000 บาทต่อปี')
-  add(d.disabledCare > 0, 'ly04', 'แบบ ล.ย.04 และบัตรประจำตัวคนพิการ', 'สำหรับค่าอุปการะผู้พิการหรือคนทุพพลภาพ')
-  add(d.children.length > 0, 'children', 'เลขบัตรประชาชนของบุตรทุกคน', 'สูติบัตรเก็บไว้เผื่อถูกขอดู')
-  add(d.prenatal > 0, 'prenatal', 'ใบเสร็จค่าฝากครรภ์และค่าคลอด', 'จากโรงพยาบาลหรือสถานพยาบาล')
-  add(d.lifeInsurance + d.healthInsurance + d.pensionInsurance + d.spouseLifeInsurance + d.parentHealthInsurance > 0, 'insurance', 'หนังสือรับรองการชำระเบี้ยประกัน', 'ขอจากบริษัทประกัน และยินยอมให้บริษัทส่งข้อมูลให้กรมสรรพากร ไม่อย่างนั้นใช้สิทธิไม่ได้')
-  add(d.rmf + d.ssf + d.thaiEsg + d.thaiEsgxLtf > 0, 'funds', 'หนังสือรับรองการซื้อหน่วยลงทุน (RMF/ThaiESG)', 'ขอจาก บลจ. หรือแอปที่ซื้อ เก็บไว้ทุกกองทุน')
-  add(d.nsf > 0, 'nsf', 'หนังสือรับรองเงินสะสม กอช.', 'ดาวน์โหลดได้จากแอปหรือเว็บ กอช.')
-  add(d.homeLoanInterest > 0, 'home', 'หนังสือรับรองดอกเบี้ยเงินกู้ซื้อบ้าน', 'ธนาคารส่งให้ทุกต้นปี ถ้ากู้ร่วมให้หารตามจำนวนผู้กู้')
-  add(d.socialEnterprise > 0, 'se', 'หลักฐานการลงทุนในวิสาหกิจเพื่อสังคม', 'หนังสือรับรองจากวิสาหกิจ')
-  add(d.donationEducation + d.donationGeneral + d.politicalDonation > 0, 'donation', 'หลักฐานเงินบริจาค', 'ถ้าบริจาคผ่าน e-Donation ระบบส่งข้อมูลให้เอง ไม่ต้องเก็บใบเสร็จ ถ้าไม่ใช่ ให้เก็บใบอนุโมทนาบัตร')
+  add(
+    d.parents > 0,
+    'ly03',
+    t('แบบ ล.ย.03 และเลขบัตรประชาชนบิดามารดา', "Form L.Y. 03 and your parents' ID numbers"),
+    t('บิดามารดาอายุ 60 ปีขึ้นไป และมีเงินได้ไม่เกิน 30,000 บาทต่อปี', 'Parents must be 60 or older with income of up to 30,000 baht a year'),
+  )
+  add(d.disabledCare > 0, 'ly04', t('แบบ ล.ย.04 และบัตรประจำตัวคนพิการ', 'Form L.Y. 04 and the disability ID card'), t('สำหรับค่าอุปการะผู้พิการหรือคนทุพพลภาพ', 'For the disabled or incapacitated dependant allowance'))
+  add(d.children.length > 0, 'children', t('เลขบัตรประชาชนของบุตรทุกคน', "All your children's national ID numbers"), t('สูติบัตรเก็บไว้เผื่อถูกขอดู', 'Keep birth certificates in case they are requested'))
+  add(d.prenatal > 0, 'prenatal', t('ใบเสร็จค่าฝากครรภ์และค่าคลอด', 'Pregnancy and childbirth receipts'), t('จากโรงพยาบาลหรือสถานพยาบาล', 'From the hospital or clinic'))
+  add(
+    d.lifeInsurance + d.healthInsurance + d.pensionInsurance + d.spouseLifeInsurance + d.parentHealthInsurance > 0,
+    'insurance',
+    t('หนังสือรับรองการชำระเบี้ยประกัน', 'Insurance premium payment certificates'),
+    t(
+      'ขอจากบริษัทประกัน และยินยอมให้บริษัทส่งข้อมูลให้กรมสรรพากร ไม่อย่างนั้นใช้สิทธิไม่ได้',
+      'From your insurer. You must let the insurer send the data to the Revenue Department, or the deduction is not allowed.',
+    ),
+  )
+  add(
+    d.rmf + d.ssf + d.thaiEsg + d.thaiEsgxLtf > 0,
+    'funds',
+    t('หนังสือรับรองการซื้อหน่วยลงทุน (RMF/ThaiESG)', 'Fund purchase certificates (RMF / ThaiESG)'),
+    t('ขอจาก บลจ. หรือแอปที่ซื้อ เก็บไว้ทุกกองทุน', 'From the asset management company or the app you used; keep one for every fund'),
+  )
+  add(d.nsf > 0, 'nsf', t('หนังสือรับรองเงินสะสม กอช.', 'National Savings Fund (NSF) statement'), t('ดาวน์โหลดได้จากแอปหรือเว็บ กอช.', 'Download it from the NSF app or website'))
+  add(
+    d.homeLoanInterest > 0,
+    'home',
+    t('หนังสือรับรองดอกเบี้ยเงินกู้ซื้อบ้าน', 'Home loan interest certificate'),
+    t('ธนาคารส่งให้ทุกต้นปี ถ้ากู้ร่วมให้หารตามจำนวนผู้กู้', 'Banks send it early each year. For a joint loan, split it by the number of borrowers.'),
+  )
+  add(d.socialEnterprise > 0, 'se', t('หลักฐานการลงทุนในวิสาหกิจเพื่อสังคม', 'Evidence of social enterprise investment'), t('หนังสือรับรองจากวิสาหกิจ', 'A certificate from the enterprise'))
+  add(
+    d.donationEducation + d.donationGeneral + d.politicalDonation > 0,
+    'donation',
+    t('หลักฐานเงินบริจาค', 'Donation evidence'),
+    t(
+      'ถ้าบริจาคผ่าน e-Donation ระบบส่งข้อมูลให้เอง ไม่ต้องเก็บใบเสร็จ ถ้าไม่ใช่ ให้เก็บใบอนุโมทนาบัตร',
+      'Donations through e-Donation are reported automatically, so no receipt is needed. Otherwise keep the receipt.',
+    ),
+  )
   for (const m of rules.measures) {
     const paid = Object.values(input.measures[m.id] ?? {}).some((v) => v > 0)
-    add(paid, `measure-${m.id}`, `ใบกำกับภาษีสำหรับ ${m.label}`, 'ต้องเป็น e-Tax Invoice หรือ e-Receipt ที่มีชื่อและเลขประจำตัวผู้เสียภาษีของคุณ')
+    add(
+      paid,
+      `measure-${m.id}`,
+      t(`ใบกำกับภาษีสำหรับ ${m.label}`, `Tax invoices for ${m.labelEn ?? m.label}`),
+      t('ต้องเป็น e-Tax Invoice หรือ e-Receipt ที่มีชื่อและเลขประจำตัวผู้เสียภาษีของคุณ', 'Must be an e-Tax Invoice or e-Receipt showing your name and tax ID number'),
+    )
   }
-  add(true, 'promptpay', 'ผูกพร้อมเพย์กับเลขบัตรประชาชน', 'กรมสรรพากรคืนเงินภาษีผ่านพร้อมเพย์ที่ผูกกับเลขบัตรประชาชนเท่านั้น')
+  add(
+    true,
+    'promptpay',
+    t('ผูกพร้อมเพย์กับเลขบัตรประชาชน', 'Link PromptPay to your national ID number'),
+    t('กรมสรรพากรคืนเงินภาษีผ่านพร้อมเพย์ที่ผูกกับเลขบัตรประชาชนเท่านั้น', 'The Revenue Department pays refunds only to PromptPay linked to your national ID number'),
+  )
   return docs
 }
 

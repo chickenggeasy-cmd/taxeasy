@@ -1,7 +1,7 @@
 <?php
 // POST api/chat.php — AI ผู้ช่วยภาษี (ส่งต่อคำถามไปยัง Claude โดยเก็บ API key ไว้ฝั่งเซิร์ฟเวอร์)
-// รับ: { "taxYear": 2569, "messages": [{ "role": "user", "content": "..." }, ...], "context": "สรุปภาษีของผู้ใช้ (ถ้ายินยอม)" }
-// ส่งกลับ: { "ok": true, "reply": "..." }
+// รับ: { "taxYear": 2569, "messages": [{ "role": "user", "content": "..." }, ...], "context": "สรุปภาษีของผู้ใช้ (ถ้ายินยอม)", "lang": "th" | "en" }
+// ส่งกลับ: { "ok": true, "reply": "..." } หรือ { "ok": false, "error": "ข้อความไทย", "errorEn": "English message" }
 declare(strict_types=1);
 require __DIR__ . '/../server/bootstrap.php';
 
@@ -29,18 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     ]);
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น'], 405);
+    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น', 'errorEn' => 'Use POST only'], 405);
 }
 
 if (!$phpOk) {
-    json_response(['ok' => false, 'code' => 'php_version', 'error' => 'AI ผู้ช่วยต้องใช้ PHP 8.1 ขึ้นไป (เซิร์ฟเวอร์นี้ใช้ ' . PHP_VERSION . ')'], 503);
+    json_response(['ok' => false, 'code' => 'php_version', 'error' => 'AI ผู้ช่วยต้องใช้ PHP 8.1 ขึ้นไป (เซิร์ฟเวอร์นี้ใช้ ' . PHP_VERSION . ')', 'errorEn' => 'The AI assistant needs PHP 8.1 or later (this server runs ' . PHP_VERSION . ')'], 503);
 }
 $ai = config()['ai'];
 if ($ai['api_key'] === '') {
-    json_response(['ok' => false, 'code' => 'not_configured', 'error' => 'ผู้ดูแลยังไม่ได้เปิดใช้ AI ผู้ช่วย'], 503);
+    json_response(['ok' => false, 'code' => 'not_configured', 'error' => 'ผู้ดูแลยังไม่ได้เปิดใช้ AI ผู้ช่วย', 'errorEn' => 'The admin has not turned on the AI assistant yet'], 503);
 }
 if (!is_file(__DIR__ . '/../server/vendor/autoload.php')) {
-    json_response(['ok' => false, 'error' => 'ไม่พบไลบรารี server/vendor'], 500);
+    json_response(['ok' => false, 'error' => 'ไม่พบไลบรารี server/vendor', 'errorEn' => 'The server/vendor library is missing'], 500);
 }
 require __DIR__ . '/../server/vendor/autoload.php';
 
@@ -48,7 +48,7 @@ require __DIR__ . '/../server/vendor/autoload.php';
 $body = json_decode((string) file_get_contents('php://input'), true);
 $messages = $body['messages'] ?? null;
 if (!is_array($messages) || $messages === [] || count($messages) > MAX_MESSAGES) {
-    json_response(['ok' => false, 'error' => 'บทสนทนายาวเกินไป เริ่มแชทใหม่ได้เลย'], 400);
+    json_response(['ok' => false, 'error' => 'บทสนทนายาวเกินไป เริ่มแชทใหม่ได้เลย', 'errorEn' => 'The conversation is too long. Start a new chat.'], 400);
 }
 $clean = [];
 foreach (array_values($messages) as $i => $m) {
@@ -56,14 +56,15 @@ foreach (array_values($messages) as $i => $m) {
     $text = trim((string) ($m['content'] ?? ''));
     $expected = $i % 2 === 0 ? 'user' : 'assistant';
     if ($role !== $expected || $text === '' || mb_strlen($text) > MAX_CHARS) {
-        json_response(['ok' => false, 'error' => 'ข้อความไม่ถูกต้องหรือยาวเกิน ' . MAX_CHARS . ' ตัวอักษร'], 400);
+        json_response(['ok' => false, 'error' => 'ข้อความไม่ถูกต้องหรือยาวเกิน ' . MAX_CHARS . ' ตัวอักษร', 'errorEn' => 'The message is invalid or longer than ' . MAX_CHARS . ' characters'], 400);
     }
     $clean[] = ['role' => $role, 'content' => $text];
 }
 if (end($clean)['role'] !== 'user') {
-    json_response(['ok' => false, 'error' => 'ข้อความสุดท้ายต้องเป็นคำถาม'], 400);
+    json_response(['ok' => false, 'error' => 'ข้อความสุดท้ายต้องเป็นคำถาม', 'errorEn' => 'The last message must be a question'], 400);
 }
 $context = mb_substr(trim((string) ($body['context'] ?? '')), 0, MAX_CONTEXT_CHARS);
+$lang = ($body['lang'] ?? 'th') === 'en' ? 'en' : 'th';
 $year = (int) ($body['taxYear'] ?? 0);
 
 // ---- จำกัดจำนวนข้อความต่อเครื่องต่อวัน ----
@@ -72,10 +73,10 @@ try {
     $st = db()->prepare('SELECT COUNT(*) FROM chat_usage WHERE client_hash = ? AND created_at >= NOW() - INTERVAL 1 DAY');
     $st->execute([$clientHash]);
     if ((int) $st->fetchColumn() >= (int) $ai['daily_limit_per_client']) {
-        json_response(['ok' => false, 'error' => 'วันนี้ถามครบ ' . $ai['daily_limit_per_client'] . ' ข้อความแล้ว พรุ่งนี้ถามต่อได้'], 429);
+        json_response(['ok' => false, 'error' => 'วันนี้ถามครบ ' . $ai['daily_limit_per_client'] . ' ข้อความแล้ว พรุ่งนี้ถามต่อได้', 'errorEn' => 'You have used all ' . $ai['daily_limit_per_client'] . ' messages for today. You can ask again tomorrow.'], 429);
     }
 } catch (Throwable $e) {
-    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม'], 503);
+    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม', 'errorEn' => 'The database is not ready'], 503);
 }
 
 // ---- เตรียม prompt: กฎภาษีของปีนั้น (คงที่ แคชได้) + สรุปของผู้ใช้ ----
@@ -83,17 +84,22 @@ $rulesByYear = [];
 foreach (published_rules() as $r) $rulesByYear[$r['taxYear']] = $r;
 $rules = $rulesByYear[$year] ?? (end($rulesByYear) ?: null);
 
+// ภาษาของคำตอบตามภาษาที่ผู้ใช้เลือกในแอป
+$replyLanguage = $lang === 'en'
+    ? '- ผู้ใช้เลือกภาษาอังกฤษในแอป ให้ตอบเป็นภาษาอังกฤษที่เข้าใจง่าย สั้น ตรงประเด็น ใช้ตัวเลขจริงของผู้ใช้เมื่อมี เรียกแบบฟอร์มว่า P.N.D. 90/91/94 และชื่อแท็บว่า Summary / Income / Deductions / Plan / More'
+    : '- ตอบเป็นภาษาไทยที่เข้าใจง่าย สั้น ตรงประเด็น เหมือนเพื่อนที่รู้เรื่องภาษีอธิบายให้ฟัง ใช้ตัวเลขจริงของผู้ใช้เมื่อมี';
+
 $system = <<<TXT
 คุณคือ "น้องภาษี" ผู้ช่วยในแอป ภาษีง่ายๆ (TaxEasy) ช่วยคนไทยเข้าใจและวางแผนภาษีเงินได้บุคคลธรรมดา
 
 วิธีตอบ
-- ตอบเป็นภาษาไทยที่เข้าใจง่าย สั้น ตรงประเด็น เหมือนเพื่อนที่รู้เรื่องภาษีอธิบายให้ฟัง ใช้ตัวเลขจริงของผู้ใช้เมื่อมี
+{$replyLanguage}
 - ใช้ตัวเลขเพดานและเงื่อนไขจากกฎภาษีด้านล่างเป็นหลัก ถ้ากฎด้านล่างไม่ได้ระบุเรื่องที่ถาม ให้บอกว่าควรตรวจสอบกับกรมสรรพากร (rd.go.th หรือโทร 1161) แทนการเดา
 - เมื่อคำนวณ ให้แสดงวิธีคิดสั้น ๆ เช่น เงินได้ − ค่าใช้จ่าย − ค่าลดหย่อน = เงินได้สุทธิ
 - เรื่องการลงทุน (RMF, ThaiESG, ประกัน) อธิบายสิทธิทางภาษีและเงื่อนไขการถือครองได้ แต่ไม่แนะนำกองทุนหรือบริษัทใดเป็นการเฉพาะ และเตือนให้ดูความเหมาะสมกับเป้าหมายการเงินของตัวเอง
 - ถ้าถามว่าต้องยื่นแบบหรือไม่ ให้ใช้เกณฑ์ filingThresholds ในกฎภาษี: เงินได้ทั้งปี (รวมของคู่สมรส) เกินเกณฑ์ต้องยื่นแบบแม้ภาษีเป็น 0 และถ้าถูกหักภาษีไว้ ต้องยื่นแบบจึงจะได้เงินคืน
 - ไม่ช่วยหลบเลี่ยงภาษีหรือแจ้งข้อมูลเท็จ ถ้าผู้ใช้ถามแนวนั้น ให้อธิบายวิธีประหยัดภาษีที่ถูกกฎหมายแทน
-- ผู้ใช้ทำงานในแอปที่มีแท็บ สรุป / รายได้ / ลดหย่อน / วางแผน / ตั้งค่า แนะนำให้ไปกรอกที่แท็บที่เกี่ยวข้องได้
+- ผู้ใช้ทำงานในแอปที่มีแท็บ สรุป / รายได้ / ลดหย่อน / วางแผน / เพิ่มเติม แนะนำให้ไปกรอกที่แท็บที่เกี่ยวข้องได้
 - จัดรูปแบบด้วยข้อความธรรมดา ใช้รายการขีด (-) ได้ ไม่ต้องใช้ตารางหรือหัวข้อ markdown
 TXT;
 $systemBlocks = [['type' => 'text', 'text' => $system]];
@@ -130,14 +136,14 @@ try {
     // หมายเหตุ: การกระจาย array ที่มี key เป็นชื่อพารามิเตอร์ (...$params) ใช้ได้ตั้งแต่ PHP 8.1 ซึ่งตรวจไว้ด้านบนแล้ว
 } catch (AuthenticationException) {
     error_log('[taxeasy] chat: invalid API key');
-    json_response(['ok' => false, 'error' => 'API key ของ AI ไม่ถูกต้อง แจ้งผู้ดูแลระบบ'], 502);
+    json_response(['ok' => false, 'error' => 'API key ของ AI ไม่ถูกต้อง แจ้งผู้ดูแลระบบ', 'errorEn' => 'The AI API key is invalid. Please tell the admin.'], 502);
 } catch (RateLimitException) {
-    json_response(['ok' => false, 'error' => 'มีคนใช้งานพร้อมกันเยอะ ลองอีกครั้งในอีกสักครู่'], 503);
+    json_response(['ok' => false, 'error' => 'มีคนใช้งานพร้อมกันเยอะ ลองอีกครั้งในอีกสักครู่', 'errorEn' => 'Many people are using it right now. Try again shortly.'], 503);
 } catch (APIConnectionException) {
-    json_response(['ok' => false, 'error' => 'เซิร์ฟเวอร์เชื่อมต่อ AI ไม่ได้ ตรวจอินเทอร์เน็ตของเครื่องเซิร์ฟเวอร์'], 502);
+    json_response(['ok' => false, 'error' => 'เซิร์ฟเวอร์เชื่อมต่อ AI ไม่ได้ ตรวจอินเทอร์เน็ตของเครื่องเซิร์ฟเวอร์', 'errorEn' => "The server can't reach the AI. Check the server's internet connection."], 502);
 } catch (APIStatusException $e) {
     error_log('[taxeasy] chat: ' . $e->getMessage());
-    json_response(['ok' => false, 'error' => 'AI ตอบไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง'], 502);
+    json_response(['ok' => false, 'error' => 'AI ตอบไม่ได้ในตอนนี้ ลองใหม่อีกครั้ง', 'errorEn' => "The AI can't answer right now. Please try again."], 502);
 }
 
 db()->prepare('INSERT INTO chat_usage (client_hash, input_tokens, output_tokens) VALUES (?, ?, ?)')

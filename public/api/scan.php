@@ -17,17 +17,17 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MIN_PHP = 80100;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น'], 405);
+    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น', 'errorEn' => 'Use POST only'], 405);
 }
 if (PHP_VERSION_ID < MIN_PHP) {
-    json_response(['ok' => false, 'code' => 'php_version', 'error' => 'การสแกนเอกสารต้องใช้ PHP 8.1 ขึ้นไป (เซิร์ฟเวอร์นี้ใช้ ' . PHP_VERSION . ')'], 503);
+    json_response(['ok' => false, 'code' => 'php_version', 'error' => 'การสแกนเอกสารต้องใช้ PHP 8.1 ขึ้นไป (เซิร์ฟเวอร์นี้ใช้ ' . PHP_VERSION . ')', 'errorEn' => 'Document scanning needs PHP 8.1 or later (this server runs ' . PHP_VERSION . ')'], 503);
 }
 $ai = config()['ai'];
 if ($ai['api_key'] === '') {
-    json_response(['ok' => false, 'code' => 'not_configured', 'error' => 'ผู้ดูแลยังไม่ได้เปิดใช้ AI จึงสแกนเอกสารไม่ได้ กรอกตัวเลขเองได้เลย'], 503);
+    json_response(['ok' => false, 'code' => 'not_configured', 'error' => 'ผู้ดูแลยังไม่ได้เปิดใช้ AI จึงสแกนเอกสารไม่ได้ กรอกตัวเลขเองได้เลย', 'errorEn' => 'The admin has not turned on the AI, so scanning is unavailable. You can enter the figures yourself.'], 503);
 }
 if (!is_file(__DIR__ . '/../server/vendor/autoload.php')) {
-    json_response(['ok' => false, 'error' => 'ไม่พบไลบรารี server/vendor'], 500);
+    json_response(['ok' => false, 'error' => 'ไม่พบไลบรารี server/vendor', 'errorEn' => 'The server/vendor library is missing'], 500);
 }
 require __DIR__ . '/../server/vendor/autoload.php';
 
@@ -36,10 +36,10 @@ $body = json_decode((string) file_get_contents('php://input'), true);
 $type = (string) ($body['mediaType'] ?? '');
 $raw = base64_decode((string) ($body['data'] ?? ''), true);
 if (!in_array($type, TYPES, true) || $raw === false || $raw === '') {
-    json_response(['ok' => false, 'error' => 'รองรับเฉพาะรูป JPG, PNG, WebP หรือไฟล์ PDF'], 400);
+    json_response(['ok' => false, 'error' => 'รองรับเฉพาะรูป JPG, PNG, WebP หรือไฟล์ PDF', 'errorEn' => 'Only JPG, PNG or WebP images and PDF files are supported'], 400);
 }
 if (strlen($raw) > MAX_BYTES) {
-    json_response(['ok' => false, 'error' => 'ไฟล์ใหญ่เกินไป (สูงสุดประมาณ 4.5 MB)'], 413);
+    json_response(['ok' => false, 'error' => 'ไฟล์ใหญ่เกินไป (สูงสุดประมาณ 4.5 MB)', 'errorEn' => 'The file is too large (about 4.5 MB at most)'], 413);
 }
 // ตรวจหัวไฟล์ให้ตรงกับชนิดที่แจ้งมา
 $magic = [
@@ -49,7 +49,7 @@ $magic = [
     'application/pdf' => '%PDF',
 ];
 if (!str_starts_with($raw, $magic[$type])) {
-    json_response(['ok' => false, 'error' => 'ไฟล์ไม่ตรงกับชนิดที่แจ้ง'], 400);
+    json_response(['ok' => false, 'error' => 'ไฟล์ไม่ตรงกับชนิดที่แจ้ง', 'errorEn' => 'The file does not match its stated type'], 400);
 }
 
 // ---- ใช้โควตาร่วมกับ AI ผู้ช่วย (ต่อเครื่องต่อวัน) ----
@@ -58,10 +58,10 @@ try {
     $st = db()->prepare('SELECT COUNT(*) FROM chat_usage WHERE client_hash = ? AND created_at >= NOW() - INTERVAL 1 DAY');
     $st->execute([$clientHash]);
     if ((int) $st->fetchColumn() >= (int) $ai['daily_limit_per_client']) {
-        json_response(['ok' => false, 'error' => 'วันนี้ใช้ AI ครบโควตาแล้ว พรุ่งนี้สแกนต่อได้ หรือกรอกตัวเลขเองได้เลย'], 429);
+        json_response(['ok' => false, 'error' => 'วันนี้ใช้ AI ครบโควตาแล้ว พรุ่งนี้สแกนต่อได้ หรือกรอกตัวเลขเองได้เลย', 'errorEn' => 'You have used today\'s AI quota. Scan again tomorrow, or enter the figures yourself.'], 429);
     }
 } catch (Throwable $e) {
-    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม'], 503);
+    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม', 'errorEn' => 'The database is not ready'], 503);
 }
 
 $schema = [
@@ -105,14 +105,14 @@ try {
     $message = $client->beta->messages->create(...$params);
 } catch (AuthenticationException) {
     error_log('[taxeasy] scan: invalid API key');
-    json_response(['ok' => false, 'error' => 'API key ของ AI ไม่ถูกต้อง แจ้งผู้ดูแลระบบ'], 502);
+    json_response(['ok' => false, 'error' => 'API key ของ AI ไม่ถูกต้อง แจ้งผู้ดูแลระบบ', 'errorEn' => 'The AI API key is invalid. Please tell the admin.'], 502);
 } catch (RateLimitException) {
-    json_response(['ok' => false, 'error' => 'มีคนใช้งานพร้อมกันเยอะ ลองอีกครั้งในอีกสักครู่'], 503);
+    json_response(['ok' => false, 'error' => 'มีคนใช้งานพร้อมกันเยอะ ลองอีกครั้งในอีกสักครู่', 'errorEn' => 'Many people are using it right now. Try again shortly.'], 503);
 } catch (APIConnectionException) {
-    json_response(['ok' => false, 'error' => 'เซิร์ฟเวอร์เชื่อมต่อ AI ไม่ได้ ตรวจอินเทอร์เน็ตของเครื่องเซิร์ฟเวอร์'], 502);
+    json_response(['ok' => false, 'error' => 'เซิร์ฟเวอร์เชื่อมต่อ AI ไม่ได้ ตรวจอินเทอร์เน็ตของเครื่องเซิร์ฟเวอร์', 'errorEn' => 'The server can\'t reach the AI. Check the server\'s internet connection.'], 502);
 } catch (APIStatusException $e) {
     error_log('[taxeasy] scan: ' . $e->getMessage());
-    json_response(['ok' => false, 'error' => 'อ่านเอกสารไม่สำเร็จ ลองถ่ายใหม่ให้ชัดขึ้น'], 502);
+    json_response(['ok' => false, 'error' => 'อ่านเอกสารไม่สำเร็จ ลองถ่ายใหม่ให้ชัดขึ้น', 'errorEn' => 'Could not read the document. Try a clearer photo.'], 502);
 }
 
 db()->prepare('INSERT INTO chat_usage (client_hash, input_tokens, output_tokens) VALUES (?, ?, ?)')
@@ -121,7 +121,7 @@ db()->prepare('INSERT INTO chat_usage (client_hash, input_tokens, output_tokens)
 db()->exec('DELETE FROM chat_usage WHERE created_at < NOW() - INTERVAL 90 DAY');
 
 if ($message->stopReason === 'refusal') {
-    json_response(['ok' => false, 'error' => 'อ่านเอกสารนี้ไม่ได้ กรอกตัวเลขเองได้เลย'], 422);
+    json_response(['ok' => false, 'error' => 'อ่านเอกสารนี้ไม่ได้ กรอกตัวเลขเองได้เลย', 'errorEn' => 'This document cannot be read. Please enter the figures yourself.'], 422);
 }
 $text = '';
 foreach ($message->content as $block) {
@@ -129,7 +129,7 @@ foreach ($message->content as $block) {
 }
 $data = json_decode($text, true);
 if (!is_array($data)) {
-    json_response(['ok' => false, 'error' => 'อ่านเอกสารไม่สำเร็จ ลองถ่ายใหม่ให้ชัดขึ้น'], 502);
+    json_response(['ok' => false, 'error' => 'อ่านเอกสารไม่สำเร็จ ลองถ่ายใหม่ให้ชัดขึ้น', 'errorEn' => 'Could not read the document. Try a clearer photo.'], 502);
 }
 $num = fn($v) => is_numeric($v) && $v >= 0 && $v < 1e10 ? round((float) $v, 2) : 0;
 json_response(['ok' => true, 'result' => [

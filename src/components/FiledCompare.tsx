@@ -63,7 +63,7 @@ export function FiledCompare({
           <p className="text-sm text-muted">
             {t(
               "กรอกจากแบบ ภ.ง.ด.90/91 ที่ยื่นไปแล้ว หรือหน้าสรุปใน e-Filing เพื่อดูว่าตรงกับที่แอปคำนวณไหม",
-              "Enter the figures from the ภ.ง.ด.90/91 you filed, or the e-Filing summary, to check them against the app.",
+              "Enter the figures from the P.N.D. 90/91 you filed, or the e-Filing summary, to check them against the app.",
             )}
           </p>
         </div>

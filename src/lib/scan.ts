@@ -1,5 +1,5 @@
 // สแกนหนังสือรับรอง 50 ทวิ: ย่อรูปในเครื่องก่อนส่ง แล้วให้ api/scan.php อ่านตัวเลข
-import { readApiJson } from './server'
+import { BilingualError, readApiJson } from './server'
 
 export interface ScanResult {
   found: boolean
@@ -19,7 +19,7 @@ const toBase64 = (blob: Blob) =>
   new Promise<string>((resolve, reject) => {
     const r = new FileReader()
     r.onload = () => resolve(String(r.result).split(',')[1] ?? '')
-    r.onerror = () => reject(new Error('อ่านไฟล์ไม่ได้'))
+    r.onerror = () => reject(new BilingualError('อ่านไฟล์ไม่ได้', 'Could not read the file'))
     r.readAsDataURL(blob)
   })
 
@@ -29,7 +29,7 @@ async function shrinkImage(file: File): Promise<Blob> {
   try {
     bmp = await createImageBitmap(file)
   } catch {
-    throw new Error('เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่ หรือบันทึกเป็น JPG/PNG')
+    throw new BilingualError('เปิดรูปนี้ไม่ได้ ลองถ่ายใหม่ หรือบันทึกเป็น JPG/PNG', 'Could not open this image. Take it again, or save it as JPG/PNG.')
   }
   const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height))
   const canvas = document.createElement('canvas')
@@ -40,22 +40,23 @@ async function shrinkImage(file: File): Promise<Blob> {
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height)
   bmp.close()
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('ย่อรูปไม่สำเร็จ'))), 'image/jpeg', 0.85))
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new BilingualError('ย่อรูปไม่สำเร็จ', 'Could not shrink the image'))), 'image/jpeg', 0.85))
 }
 
 export async function scanForm(file: File): Promise<ScanResult> {
   const pdf = file.type === 'application/pdf'
-  if (!pdf && !file.type.startsWith('image/')) throw new Error('เลือกรูปถ่ายหรือไฟล์ PDF ของ 50 ทวิ')
-  if (pdf && file.size > MAX_PDF) throw new Error('ไฟล์ PDF ใหญ่เกินไป (สูงสุดประมาณ 4.5 MB)')
+  if (!pdf && !file.type.startsWith('image/')) throw new BilingualError('เลือกรูปถ่ายหรือไฟล์ PDF ของ 50 ทวิ', 'Choose a photo or PDF of the 50 Tawi')
+  if (pdf && file.size > MAX_PDF) throw new BilingualError('ไฟล์ PDF ใหญ่เกินไป (สูงสุดประมาณ 4.5 MB)', 'The PDF is too large (about 4.5 MB at most)')
   const blob = pdf ? file : await shrinkImage(file)
   const body = JSON.stringify({ mediaType: pdf ? 'application/pdf' : 'image/jpeg', data: await toBase64(blob) })
   let res: Response
   try {
     res = await fetch('./api/scan.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
   } catch {
-    throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่')
+    throw new BilingualError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่', 'Could not reach the server. Check your internet connection and try again.')
   }
-  const data = await readApiJson<{ ok?: boolean; result?: ScanResult; error?: string }>(res)
-  if (!res.ok || !data.ok || !data.result) throw new Error(data.error ?? 'อ่านเอกสารไม่สำเร็จ')
+  const data = await readApiJson<{ ok?: boolean; result?: ScanResult; error?: string; errorEn?: string }>(res)
+  if (!res.ok || !data.ok || !data.result)
+    throw new BilingualError(data.error ?? 'อ่านเอกสารไม่สำเร็จ', data.errorEn ?? 'Could not read the document')
   return data.result
 }

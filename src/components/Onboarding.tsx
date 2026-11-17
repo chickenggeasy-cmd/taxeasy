@@ -74,6 +74,7 @@ const rule = { style: { stroke: 'var(--line)' } }
  * ข้อความในภาพเป็นตัวอย่างเดียวกับข้อมูลตัวอย่างในแอป
  */
 function SlideArt({ kind }: { kind: SlideKind }) {
+  const t = useT()
   const svgProps = { viewBox: '0 0 320 176', className: 'h-44 w-full', 'aria-hidden': true }
 
   if (kind === 'income') {
@@ -81,14 +82,14 @@ function SlideArt({ kind }: { kind: SlideKind }) {
       <svg {...svgProps}>
         <rect x="30" y="12" width="260" height="114" rx="14" {...card} />
         <text x="46" y="32" fontSize="10.5" {...fill('muted')}>
-          เงินเดือนทั้งปี
+          {t('เงินเดือนทั้งปี', 'Annual salary')}
         </text>
         <rect x="46" y="38" width="228" height="26" rx="8" {...outline('accent')} />
         <text x="262" y="56" textAnchor="end" fontSize="13" fontWeight="700" {...fill('ink')}>
           720,000
         </text>
         <text x="46" y="82" fontSize="10.5" {...fill('muted')}>
-          ภาษีที่ถูกหักไว้ (ใบ 50 ทวิ)
+          {t('ภาษีที่ถูกหักไว้ (ใบ 50 ทวิ)', 'Tax withheld (50 Tawi)')}
         </text>
         <rect x="46" y="88" width="228" height="26" rx="8" {...outline('line')} />
         <text x="262" y="106" textAnchor="end" fontSize="13" fontWeight="700" {...fill('ink')}>
@@ -97,7 +98,7 @@ function SlideArt({ kind }: { kind: SlideKind }) {
         <rect x="40" y="138" width="240" height="28" rx="14" {...card} />
         <rect x="90" y="142" width="44" height="20" rx="10" {...fill('accent-soft')} />
         <text x="112" y="156" textAnchor="middle" fontSize="9.5" fontWeight="700" {...fill('accent')}>
-          รายได้
+          {t('รายได้', 'Income')}
         </text>
         {[64, 160, 208, 256].map((x) => (
           <circle key={x} cx={x} cy="152" r="3" {...fill('muted')} />
@@ -112,7 +113,7 @@ function SlideArt({ kind }: { kind: SlideKind }) {
         <rect x="30" y="10" width="260" height="156" rx="14" {...card} />
         <circle cx="54" cy="34" r="9" {...fill('accent-soft')} />
         <text x="70" y="38" fontSize="11" fontWeight="600" {...fill('ink')}>
-          ประกันชีวิต
+          {t('ประกันชีวิต', 'Life insurance')}
         </text>
         <text x="274" y="38" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
           30,000
@@ -120,12 +121,12 @@ function SlideArt({ kind }: { kind: SlideKind }) {
         <rect x="70" y="46" width="204" height="5" rx="2.5" {...fill('line')} />
         <rect x="70" y="46" width="61" height="5" rx="2.5" {...fill('accent')} />
         <text x="70" y="62" fontSize="8.5" {...fill('muted')}>
-          เพดาน 100,000 บาท
+          {t('เพดาน 100,000 บาท', 'Cap 100,000 baht')}
         </text>
         <line x1="50" x2="270" y1="72" y2="72" {...rule} />
         <circle cx="54" cy="90" r="9" {...fill('accent-soft')} />
         <text x="70" y="94" fontSize="11" fontWeight="600" {...fill('ink')}>
-          กองทุน RMF
+          {t('กองทุน RMF', 'RMF fund')}
         </text>
         <text x="274" y="94" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
           50,000
@@ -133,13 +134,13 @@ function SlideArt({ kind }: { kind: SlideKind }) {
         <rect x="70" y="102" width="204" height="5" rx="2.5" {...fill('line')} />
         <rect x="70" y="102" width="51" height="5" rx="2.5" {...fill('accent')} />
         <text x="70" y="118" fontSize="8.5" {...fill('muted')}>
-          ไม่เกิน 15% ของเงินได้
+          {t('ไม่เกิน 15% ของเงินได้', 'Up to 15% of income')}
         </text>
         <line x1="50" x2="270" y1="128" y2="128" {...rule} />
         <circle cx="54" cy="146" r="9" {...fill('refund')} />
         <path d="M49.5 146l3 3 6-6" fill="none" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" style={{ stroke: 'var(--surface)' }} />
         <text x="70" y="150" fontSize="11" fontWeight="600" {...fill('ink')}>
-          บุตร 1 คน
+          {t('บุตร 1 คน', '1 child')}
         </text>
         <text x="274" y="150" textAnchor="end" fontSize="11" fontWeight="700" {...fill('ink')}>
           30,000
@@ -153,13 +154,13 @@ function SlideArt({ kind }: { kind: SlideKind }) {
       <svg {...svgProps}>
         <rect x="30" y="10" width="260" height="156" rx="14" {...card} />
         <text x="160" y="32" textAnchor="middle" fontSize="10" {...fill('muted')}>
-          ผลการคำนวณปี 2569
+          {t('ผลการคำนวณปี 2569', 'Result for tax year 2569')}
         </text>
         <text x="160" y="74" textAnchor="middle" fontSize="30" fontWeight="800" {...fill('refund')}>
           ฿7,550
         </text>
         <text x="160" y="92" textAnchor="middle" fontSize="11" {...fill('muted')}>
-          ได้คืนภาษี
+          {t('ได้คืนภาษี', 'Tax refund')}
         </text>
         <line x1="50" x2="270" y1="104" y2="104" {...rule} />
         <rect x="50" y="116" width="220" height="32" rx="16" {...fill('accent-soft')} />
@@ -168,7 +169,7 @@ function SlideArt({ kind }: { kind: SlideKind }) {
           !
         </text>
         <text x="86" y="136" fontSize="10.5" fontWeight="700" {...fill('accent')}>
-          ต้องยื่นแบบ ภ.ง.ด.91
+          {t('ต้องยื่นแบบ ภ.ง.ด.91', 'Must file P.N.D. 91')}
         </text>
       </svg>
     )
@@ -182,15 +183,15 @@ function SlideArt({ kind }: { kind: SlideKind }) {
       <rect x="153" y="46" width="14" height="38" rx="4" {...fill('accent-ink')} />
       <rect x="172" y="30" width="14" height="54" rx="4" {...fill('accent-ink')} />
       <text x="160" y="126" textAnchor="middle" fontSize="18" fontWeight="700" {...fill('ink')}>
-        ภาษีง่ายๆ
+        {t('ภาษีง่ายๆ', 'TaxEasy')}
       </text>
       <rect x="24" y="138" width="132" height="24" rx="12" {...fill('accent-soft')} />
       <text x="90" y="154" textAnchor="middle" fontSize="10.5" fontWeight="600" {...fill('accent')}>
-        ไม่ต้องสมัครสมาชิก
+        {t('ไม่ต้องสมัครสมาชิก', 'No sign-up needed')}
       </text>
       <rect x="164" y="138" width="132" height="24" rx="12" {...fill('accent-soft')} />
       <text x="230" y="154" textAnchor="middle" fontSize="10.5" fontWeight="600" {...fill('accent')}>
-        ข้อมูลอยู่ในเครื่องคุณ
+        {t('ข้อมูลอยู่ในเครื่องคุณ', 'Data stays on device')}
       </text>
     </svg>
   )
