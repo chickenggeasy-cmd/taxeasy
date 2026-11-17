@@ -115,12 +115,13 @@ export function MoneyField({
         <p className="text-sm text-muted">
           {hint}
           {hint && max !== undefined ? ' · ' : ''}
-          {max !== undefined && <>สูงสุด {fmt(max)} บาท</>}
+          {max !== undefined && t(`สูงสุด ${fmt(max)} บาท`, `Up to ${fmt(max)} baht`)}
         </p>
       )}
       {capped && (
         <p className="text-sm text-due">
-          ใช้สิทธิได้ {fmt(allowed!)} บาท{note ? ` — ${note}` : ''}
+          {t(`ใช้สิทธิได้ ${fmt(allowed!)} บาท`, `Allowed: ${fmt(allowed!)} baht`)}
+          {note ? ` — ${note}` : ''}
         </p>
       )}
       {!capped && note && value > 0 && <p className="text-sm text-muted">{note}</p>}
@@ -146,6 +147,7 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
 }
 
 export function Stepper({ label, value, onChange, max = 10, hint }: { label: string; value: number; onChange: (n: number) => void; max?: number; hint?: string }) {
+  const t = useT()
   const btn = 'h-10 w-10 rounded-full border border-line text-xl leading-none disabled:opacity-30'
   return (
     <div className="flex items-center justify-between gap-4">
@@ -154,11 +156,11 @@ export function Stepper({ label, value, onChange, max = 10, hint }: { label: str
         {hint && <span className="block text-sm text-muted">{hint}</span>}
       </span>
       <div className="flex shrink-0 items-center gap-3">
-        <button type="button" aria-label={`ลด ${label}`} className={btn} disabled={value <= 0} onClick={() => onChange(value - 1)}>
+        <button type="button" aria-label={t(`ลด ${label}`, `Fewer: ${label}`)} className={btn} disabled={value <= 0} onClick={() => onChange(value - 1)}>
           −
         </button>
         <span className="num w-6 text-center text-lg font-semibold">{value}</span>
-        <button type="button" aria-label={`เพิ่ม ${label}`} className={btn} disabled={value >= max} onClick={() => onChange(value + 1)}>
+        <button type="button" aria-label={t(`เพิ่ม ${label}`, `More: ${label}`)} className={btn} disabled={value >= max} onClick={() => onChange(value + 1)}>
           +
         </button>
       </div>

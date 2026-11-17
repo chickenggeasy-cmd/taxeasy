@@ -186,6 +186,7 @@ export interface FilingRequirement {
 }
 
 const FORM_LABEL: Record<FormType, string> = { PND91: 'ภ.ง.ด.91', PND90: 'ภ.ง.ด.90' }
+const FORM_LABEL_EN: Record<FormType, string> = { PND91: 'P.N.D. 91', PND90: 'P.N.D. 90' }
 
 /**
  * ต้องยื่นแบบหรือไม่ แม้ไม่ต้องเสียภาษี — เทียบเงินได้ก่อนหักค่าใช้จ่ายกับเกณฑ์ของสถานะนั้น
@@ -226,7 +227,7 @@ export function filingRequirement(input: TaxInput, result: TaxResult, rules: Tax
         income > threshold
           ? `${subject} เกิน${rule}${result.tax === 0 ? ' จึงต้องยื่นแบบแม้ไม่ต้องเสียภาษี' : ''}`
           : `มีภาษีต้องชำระเพิ่ม ${fmt(result.balance)} บาท`,
-      titleEn: `You must file ${FORM_LABEL[form]}`,
+      titleEn: `You must file ${FORM_LABEL_EN[form]}`,
       reasonEn:
         income > threshold
           ? `${subjectEn} is above ${ruleEn}${result.tax === 0 ? '. You must file even though no tax is due.' : '.'}`
@@ -241,7 +242,7 @@ export function filingRequirement(input: TaxInput, result: TaxResult, rules: Tax
       threshold,
       title: `ควรยื่นแบบ ${FORM_LABEL[form]} เพื่อขอเงินคืน`,
       reason: `${subject} ไม่เกิน${rule} กฎหมายจึงไม่บังคับยื่น แต่ต้องยื่นแบบถึงจะได้เงินภาษีที่ถูกหักไว้คืน ${fmt(-result.balance)} บาท`,
-      titleEn: `You should file ${FORM_LABEL[form]} to claim a refund`,
+      titleEn: `You should file ${FORM_LABEL_EN[form]} to claim a refund`,
       reasonEn: `${subjectEn} is within ${ruleEn}, so filing is not required. But you must file to get back the ${amountEn} tax withheld.`,
     }
   }

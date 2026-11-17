@@ -1,7 +1,7 @@
 import rules2568 from '../../rules/2568.json'
 import rules2569 from '../../rules/2569.json'
 import type { TaxRules } from '../engine/types'
-import { readApiJson } from './server'
+import { BilingualError, errorEn, readApiJson } from './server'
 import { readJSON, writeJSON } from './storage'
 
 /** กฎที่ติดมากับแอป ใช้ได้แม้ออฟไลน์หรือยังไม่ได้ต่อหลังบ้าน */
@@ -16,6 +16,8 @@ export interface RulesState {
   source: RulesSource
   checkedAt: string | null
   error: string | null
+  /** error ฉบับภาษาอังกฤษ */
+  errorEn: string | null
 }
 
 function isRules(x: unknown): x is TaxRules {
@@ -51,22 +53,32 @@ export function initialRules(): RulesState {
     source: cached ? 'cached' : 'bundled',
     checkedAt: cached?.checkedAt ?? null,
     error: null,
+    errorEn: null,
   }
 }
 
 /** ดึงกฎล่าสุดจากหลังบ้าน (api/rules.php) */
 export async function fetchRules(current: RulesState): Promise<RulesState> {
-  if (__PREVIEW__) return { ...current, error: 'ลิงก์ทดลองนี้ไม่ได้เชื่อมหลังบ้าน ใช้กฎที่ติดมากับแอป' }
+  if (__PREVIEW__)
+    return {
+      ...current,
+      error: 'ลิงก์ทดลองนี้ไม่ได้เชื่อมหลังบ้าน ใช้กฎที่ติดมากับแอป',
+      errorEn: 'This preview link has no backend, so it uses the rules bundled with the app',
+    }
   try {
     const res = await fetch('./api/rules.php', { cache: 'no-store' })
     const data = await readApiJson<{ ok: boolean; rules: unknown[] }>(res)
     if (!res.ok && !data.ok) throw new Error(`HTTP ${res.status}`)
     const rules = (data.rules ?? []).filter(isRules)
-    if (!data.ok || rules.length === 0) throw new Error('ไม่มีข้อมูลกฎภาษี')
+    if (!data.ok || rules.length === 0) throw new BilingualError('ไม่มีข้อมูลกฎภาษี', 'No tax rules were received')
     const checkedAt = new Date().toISOString()
     writeJSON(CACHE_KEY, { rules, checkedAt })
-    return { byYear: merge(BUNDLED, rules), source: 'online', checkedAt, error: null }
+    return { byYear: merge(BUNDLED, rules), source: 'online', checkedAt, error: null, errorEn: null }
   } catch (e) {
-    return { ...current, error: `เชื่อมต่อหลังบ้านไม่ได้: ${(e as Error).message} · ตอนนี้ใช้กฎที่บันทึกไว้ในเครื่องแทน` }
+    return {
+      ...current,
+      error: `เชื่อมต่อหลังบ้านไม่ได้: ${(e as Error).message} · ตอนนี้ใช้กฎที่บันทึกไว้ในเครื่องแทน`,
+      errorEn: `Could not reach the backend: ${errorEn(e)} · using the rules saved on this device instead`,
+    }
   }
 }

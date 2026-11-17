@@ -3,17 +3,21 @@
   "revision": 1,
   "updatedAt": "2026-10-22",
   "notes": "กฎภาษีเงินได้บุคคลธรรมดา ปีภาษี 2568 (เงินได้ 1 ม.ค. – 31 ธ.ค. 2568 ยื่นภาษีต้นปี 2569)",
+  "notesEn": "Personal income tax rules for tax year 2568 (income from 1 Jan to 31 Dec 2568 / 2025, filed in early 2569 / 2026)",
   "sources": [
     {
       "title": "กรมสรรพากร – ภาษีเงินได้บุคคลธรรมดา",
+      "titleEn": "Revenue Department – Personal income tax",
       "url": "https://www.rd.go.th/59670.html"
     },
     {
       "title": "ตลาดหลักทรัพย์ฯ – อัปเดตสิทธิลดหย่อนภาษี 2568",
+      "titleEn": "Stock Exchange of Thailand – 2568 tax deduction update",
       "url": "https://www.set.or.th/th/education-research/education/happymoney/knowledge/article/137-tsi-update-thailand-tax-deduction-2568"
     },
     {
       "title": "Thai PBS – เงื่อนไขเที่ยวดีมีคืน 2568",
+      "titleEn": "Thai PBS – Tiew Dee Mee Kuen 2568 conditions",
       "url": "https://www.thaipbs.or.th/news/content/358312"
     }
   ],
@@ -150,16 +154,19 @@
       "id": "easy-e-receipt-2",
       "label": "Easy E-Receipt 2.0",
       "description": "ซื้อสินค้า/บริการจากร้านที่จด VAT และได้รับ e-Tax Invoice หรือ e-Receipt ระหว่าง 16 ม.ค. – 28 ก.พ. 2568",
+      "descriptionEn": "Goods and services bought from VAT-registered shops with an e-Tax Invoice or e-Receipt between 16 Jan and 28 Feb 2568 (2025)",
       "inputs": [
         {
           "id": "general",
           "label": "สินค้า/บริการทั่วไป",
+          "labelEn": "General goods and services",
           "multiplier": 1,
           "maxActual": 30000
         },
         {
           "id": "otop",
           "label": "สินค้า OTOP / วิสาหกิจชุมชน / วิสาหกิจเพื่อสังคม",
+          "labelEn": "OTOP, community enterprise and social enterprise products",
           "multiplier": 1,
           "maxActual": 20000
         }
@@ -169,16 +176,20 @@
     {
       "id": "tour-2568",
       "label": "เที่ยวดีมีคืน 2568",
+      "labelEn": "Tiew Dee Mee Kuen 2568 (travel rebate)",
       "description": "ค่าที่พักและค่าอาหารที่จ่ายให้ผู้ประกอบการจด VAT ระหว่าง 29 ต.ค. – 15 ธ.ค. 2568 (ยอดเกิน 10,000 บาทต้องเป็น e-Tax Invoice)",
+      "descriptionEn": "Accommodation and food paid to VAT-registered businesses between 29 Oct and 15 Dec 2568 (2025). Amounts over 10,000 baht need an e-Tax Invoice.",
       "inputs": [
         {
           "id": "secondary",
           "label": "เมืองรอง (หักได้ 1.5 เท่า)",
+          "labelEn": "Secondary cities (counts 1.5x)",
           "multiplier": 1.5
         },
         {
           "id": "main",
           "label": "เมืองหลัก (หักได้ 1 เท่า)",
+          "labelEn": "Main cities (counts 1x)",
           "multiplier": 1
         }
       ],
@@ -188,11 +199,14 @@
     {
       "id": "home-build",
       "label": "สร้างบ้านใหม่",
+      "labelEn": "Building a new home",
       "description": "ค่าจ้างสร้างบ้านใหม่ที่จ่ายระหว่าง 9 เม.ย. 2567 – 31 ธ.ค. 2568 หักได้ 10,000 บาท ต่อทุก 1,000,000 บาท",
+      "descriptionEn": "Construction fees for a new home paid between 9 Apr 2567 (2024) and 31 Dec 2568 (2025): 10,000 baht off for every 1,000,000 baht",
       "inputs": [
         {
           "id": "cost",
           "label": "ค่าจ้างสร้างบ้าน (ตามใบกำกับภาษี)",
+          "labelEn": "Construction fees (per tax invoice)",
           "multiplier": 0.01,
           "step": 1000000
         }

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { TaxResult } from '../engine/types'
 import { fmt, pct } from '../lib/format'
+import { useT } from '../lib/lang'
 
 /** บันไดภาษี: แต่ละขั้นแสดงช่วงเงินได้ อัตรา และภาษีที่เกิดในขั้นนั้น */
 export function Staircase({ result }: { result: TaxResult }) {
+  const t = useT()
   const [all, setAll] = useState(false)
   const lines = result.brackets
   const current = lines.findIndex((l) => l.to === null || result.netIncome < l.to)
@@ -27,7 +29,7 @@ export function Staircase({ result }: { result: TaxResult }) {
               </span>
               <span className="min-w-0">
                 <span className="num block truncate text-xs text-muted">
-                  {fmt(l.from)} – {l.to === null ? 'ขึ้นไป' : fmt(l.to)}
+                  {fmt(l.from)} – {l.to === null ? t('ขึ้นไป', 'and above') : fmt(l.to)}
                 </span>
                 <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-paper">
                   <span className="block h-full rounded-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${fill * 100}%` }} />
@@ -40,7 +42,7 @@ export function Staircase({ result }: { result: TaxResult }) {
       </ol>
       {lines.length > shown.length || all ? (
         <button type="button" className="self-start text-sm font-semibold text-accent" onClick={() => setAll(!all)}>
-          {all ? 'ย่อขั้นบันได' : `ดูทั้ง ${lines.length} ขั้น`}
+          {all ? t('ย่อขั้นบันได', 'Show fewer brackets') : t(`ดูทั้ง ${lines.length} ขั้น`, `Show all ${lines.length} brackets`)}
         </button>
       ) : null}
     </div>

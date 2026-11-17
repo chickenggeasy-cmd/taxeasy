@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { marginalRate, progressiveTax } from '../engine/calculate'
 import type { TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
+import { useT } from '../lib/lang'
 
 interface Point {
   net: number
@@ -27,6 +28,7 @@ function niceTicks(max: number, count = 4): number[] {
 
 /** เส้นโค้งภาษีขั้นบันได: แกน X = เงินได้สุทธิ, แกน Y = ภาษี วาดตามสเกลจริง */
 export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; current: Point; scenario?: Point }) {
+  const t = useT()
   const wrap = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(360)
   const [hover, setHover] = useState<number | null>(null)
@@ -68,8 +70,8 @@ export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; curren
   for (const b of [...bounds, xMax]) if (!xLabels.length || sx(b) - sx(xLabels[xLabels.length - 1]) > 42) xLabels.push(b)
 
   const markers = [
-    { key: 'now', label: 'ตอนนี้', p: current, color: 'var(--ink)' },
-    ...(scenario && Math.abs(scenario.net - current.net) > xMax * 0.01 ? [{ key: 'if', label: 'ถ้า…', p: scenario, color: 'var(--accent)' }] : []),
+    { key: 'now', label: t('ตอนนี้', 'Now'), p: current, color: 'var(--ink)' },
+    ...(scenario && Math.abs(scenario.net - current.net) > xMax * 0.01 ? [{ key: 'if', label: t('ถ้า…', 'What if…'), p: scenario, color: 'var(--accent)' }] : []),
   ]
 
   const onMove = (clientX: number) => {
@@ -88,7 +90,10 @@ export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; curren
           width="100%"
           height={H}
           role="img"
-          aria-label={`กราฟภาษีตามเงินได้สุทธิ ตอนนี้เงินได้สุทธิ ${fmt(current.net)} บาท ภาษี ${fmt(current.tax)} บาท`}
+          aria-label={t(
+            `กราฟภาษีตามเงินได้สุทธิ ตอนนี้เงินได้สุทธิ ${fmt(current.net)} บาท ภาษี ${fmt(current.tax)} บาท`,
+            `Tax by net income chart. Net income now ${fmt(current.net)} baht, tax ${fmt(current.tax)} baht`,
+          )}
           tabIndex={0}
           className="block touch-pan-y outline-none focus-visible:outline-2 focus-visible:outline-accent"
           onPointerMove={(e) => onMove(e.clientX)}
@@ -119,11 +124,11 @@ export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; curren
             )
           })}
           {/* เส้นตารางแกน Y */}
-          {yTicks.map((t) => (
-            <g key={t}>
-              <line x1={M.left} x2={M.left + iw} y1={sy(t)} y2={sy(t)} stroke="var(--line)" strokeWidth="1" />
-              <text x={M.left - 6} y={sy(t) + 3.5} textAnchor="end" fontSize="10" fill="var(--muted)" className="num">
-                {compact(t)}
+          {yTicks.map((tick) => (
+            <g key={tick}>
+              <line x1={M.left} x2={M.left + iw} y1={sy(tick)} y2={sy(tick)} stroke="var(--line)" strokeWidth="1" />
+              <text x={M.left - 6} y={sy(tick) + 3.5} textAnchor="end" fontSize="10" fill="var(--muted)" className="num">
+                {compact(tick)}
               </text>
             </g>
           ))}
@@ -162,19 +167,19 @@ export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; curren
             style={sx(hx) > width / 2 ? { right: width - sx(hx) + 10 } : { left: sx(hx) + 10 }}
           >
             <p className="num">
-              เงินได้สุทธิ <b>{fmt(hx)}</b>
+              {t('เงินได้สุทธิ', 'Net income')} <b>{fmt(hx)}</b>
             </p>
             <p className="num">
-              ภาษี <b>{fmt(taxAt(hx))}</b> · ฐาน {pct(marginalRate(hx, rules))}
+              {t('ภาษี', 'Tax')} <b>{fmt(taxAt(hx))}</b> · {t('ฐาน', 'bracket')} {pct(marginalRate(hx, rules))}
             </p>
           </div>
         )}
       </div>
 
       <div className="flex items-center justify-between gap-3 text-xs text-muted">
-        <span>แกนนอน: เงินได้สุทธิ (บาท) · แกนตั้ง: ภาษีทั้งปี (บาท)</span>
+        <span>{t('แกนนอน: เงินได้สุทธิ (บาท) · แกนตั้ง: ภาษีทั้งปี (บาท)', 'Across: net income (baht) · Up: tax for the year (baht)')}</span>
         <button type="button" onClick={() => setTable(!table)} className="shrink-0 font-semibold text-accent">
-          {table ? 'ซ่อนตาราง' : 'ดูเป็นตาราง'}
+          {table ? t('ซ่อนตาราง', 'Hide table') : t('ดูเป็นตาราง', 'Show as table')}
         </button>
       </div>
       {table && (
@@ -182,9 +187,9 @@ export function TaxCurve({ rules, current, scenario }: { rules: TaxRules; curren
           <table className="num w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted">
-                <th className="py-1 font-semibold">เงินได้สุทธิ</th>
-                <th className="py-1 text-right font-semibold">ภาษี</th>
-                <th className="py-1 text-right font-semibold">ฐาน</th>
+                <th className="py-1 font-semibold">{t('เงินได้สุทธิ', 'Net income')}</th>
+                <th className="py-1 text-right font-semibold">{t('ภาษี', 'Tax')}</th>
+                <th className="py-1 text-right font-semibold">{t('ฐาน', 'Bracket')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">

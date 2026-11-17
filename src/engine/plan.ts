@@ -14,20 +14,22 @@ export function compareDividendChoice(input: TaxInput, rules: TaxRules): { inclu
 export interface PlanSuggestion {
   key: DeductionKey
   label: string
+  labelEn: string
   /** ยังใส่เพิ่มได้อีกกี่บาท */
   room: number
   /** ภาษีที่ประหยัดได้ถ้าใช้สิทธิเต็ม */
   saving: number
   hint: string
+  hintEn: string
 }
 
-const CANDIDATES: { key: DeductionKey; label: string; hint: string }[] = [
-  { key: 'rmf', label: 'กองทุน RMF', hint: 'ถือจนอายุ 55 ปี และถือครบ 5 ปี' },
-  { key: 'thaiEsg', label: 'กองทุน ThaiESG', hint: 'ต้องถือครองตามระยะเวลาที่กำหนด' },
-  { key: 'pensionInsurance', label: 'ประกันชีวิตแบบบำนาญ', hint: 'คุ้มครองระยะยาว ได้เงินคืนหลังเกษียณ' },
-  { key: 'lifeInsurance', label: 'ประกันชีวิต', hint: 'กรมธรรม์ 10 ปีขึ้นไป' },
-  { key: 'healthInsurance', label: 'ประกันสุขภาพ', hint: 'ได้ทั้งความคุ้มครองและลดหย่อนภาษี' },
-  { key: 'nsf', label: 'กอช.', hint: 'สำหรับผู้ที่ไม่อยู่ในระบบบำนาญอื่น' },
+const CANDIDATES: { key: DeductionKey; label: string; labelEn: string; hint: string; hintEn: string }[] = [
+  { key: 'rmf', label: 'กองทุน RMF', labelEn: 'RMF fund', hint: 'ถือจนอายุ 55 ปี และถือครบ 5 ปี', hintEn: 'Hold until age 55 and for a full 5 years' },
+  { key: 'thaiEsg', label: 'กองทุน ThaiESG', labelEn: 'ThaiESG fund', hint: 'ต้องถือครองตามระยะเวลาที่กำหนด', hintEn: 'Must be held for the set period' },
+  { key: 'pensionInsurance', label: 'ประกันชีวิตแบบบำนาญ', labelEn: 'Pension life insurance', hint: 'คุ้มครองระยะยาว ได้เงินคืนหลังเกษียณ', hintEn: 'Long-term cover; money back after retirement' },
+  { key: 'lifeInsurance', label: 'ประกันชีวิต', labelEn: 'Life insurance', hint: 'กรมธรรม์ 10 ปีขึ้นไป', hintEn: 'Policies of 10 years or more' },
+  { key: 'healthInsurance', label: 'ประกันสุขภาพ', labelEn: 'Health insurance', hint: 'ได้ทั้งความคุ้มครองและลดหย่อนภาษี', hintEn: 'Gives both cover and a tax deduction' },
+  { key: 'nsf', label: 'กอช.', labelEn: 'National Savings Fund (NSF)', hint: 'สำหรับผู้ที่ไม่อยู่ในระบบบำนาญอื่น', hintEn: 'For people not in another pension scheme' },
 ]
 
 const BIG = 100_000_000

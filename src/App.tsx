@@ -172,10 +172,15 @@ export default function App() {
     ),
   }[tab]
 
-  const balanceText = result.balance < 0 ? `ได้คืน ฿${fmt(-result.balance)}` : result.balance > 0 ? `จ่ายเพิ่ม ฿${fmt(result.balance)}` : 'ไม่ต้องจ่ายเพิ่ม'
+  const balanceText =
+    result.balance < 0
+      ? t(`ได้คืน ฿${fmt(-result.balance)}`, `Refund ฿${fmt(-result.balance)}`)
+      : result.balance > 0
+        ? t(`จ่ายเพิ่ม ฿${fmt(result.balance)}`, `Pay ฿${fmt(result.balance)} more`)
+        : t('ไม่ต้องจ่ายเพิ่ม', 'Nothing more to pay')
   const titles: Partial<Record<Tab, [string, string]>> = {
     market: ['ตลาดหุ้น', 'Global markets'],
-    halfyear: ['ภ.ง.ด.94', 'ภ.ง.ด.94 (half-year)'],
+    halfyear: ['ภ.ง.ด.94', 'P.N.D. 94 (half-year)'],
     privacy: ['ความเป็นส่วนตัว', 'Privacy'],
     feedback: ['แจ้งปัญหา', 'Report a problem'],
   }
@@ -189,11 +194,11 @@ export default function App() {
           <div className="flex min-w-0 items-center gap-2.5">
             <img src="./icons/icon.svg" alt="" width="36" height="36" className="h-9 w-9 shrink-0 rounded-xl shadow-sm" />
             <div className="min-w-0 leading-tight">
-              <p className="font-display text-lg font-semibold">ภาษีง่ายๆ</p>
+              <p className="font-display text-lg font-semibold">{t('ภาษีง่ายๆ', 'TaxEasy')}</p>
               <p className="text-xs text-muted md:hidden">{title}</p>
             </div>
           </div>
-          <nav aria-label="เมนูหลัก" className="hidden gap-1 md:flex">
+          <nav aria-label={t('เมนูหลัก', 'Main menu')} className="hidden gap-1 md:flex">
             {TABS.map((tb) => (
               <button
                 key={tb.id}
@@ -271,10 +276,10 @@ export default function App() {
               <Verdict result={result} />
               <div className="card rounded-3xl p-4">
                 {[
-                  ['เงินได้ทั้งปี', fmt(result.totalIncome)],
-                  ['หักค่าใช้จ่าย + ลดหย่อน', fmt(result.totalExpense + result.elderlyExemption + result.totalDeductions)],
-                  ['เงินได้สุทธิ', fmt(result.netIncome)],
-                  ['ฐานภาษีสูงสุด', `${Math.round(result.marginalRate * 100)}%`],
+                  [t('เงินได้ทั้งปี', 'Total income'), fmt(result.totalIncome)],
+                  [t('หักค่าใช้จ่าย + ลดหย่อน', 'Expenses + deductions'), fmt(result.totalExpense + result.elderlyExemption + result.totalDeductions)],
+                  [t('เงินได้สุทธิ', 'Net taxable income'), fmt(result.netIncome)],
+                  [t('ฐานภาษีสูงสุด', 'Top tax rate'), `${Math.round(result.marginalRate * 100)}%`],
                 ].map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-3 py-1.5 text-[15px]">
                     <span className="text-muted">{k}</span>
@@ -282,7 +287,7 @@ export default function App() {
                   </div>
                 ))}
                 <button type="button" onClick={() => go('summary')} className="mt-2 w-full rounded-2xl bg-accent-soft px-4 py-2.5 text-sm font-semibold text-accent">
-                  ดูรายละเอียดการคำนวณ
+                  {t('ดูรายละเอียดการคำนวณ', 'See the full calculation')}
                 </button>
               </div>
             </div>
@@ -305,11 +310,11 @@ export default function App() {
             }`}
           >
             <span>{balanceText}</span>
-            <span className="text-sm font-normal text-ink">ภาษีทั้งปี {fmt(result.tax)}</span>
+            <span className="text-sm font-normal text-ink">{t(`ภาษีทั้งปี ${fmt(result.tax)}`, `Tax for the year ${fmt(result.tax)}`)}</span>
           </button>
         )}
         <nav
-          aria-label="เมนูหลัก"
+          aria-label={t('เมนูหลัก', 'Main menu')}
           className="grid grid-cols-5 border-t border-line bg-surface pb-[env(safe-area-inset-bottom,0px)]"
           style={{ paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)' }}
         >

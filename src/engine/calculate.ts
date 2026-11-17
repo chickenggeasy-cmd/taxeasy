@@ -43,6 +43,7 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   const { income, deductions: d, profile } = input
   const ex = rules.expenses
   const warnings: string[] = []
+  const warningsEn: string[] = []
 
   // 1) เงินได้และค่าใช้จ่าย
   const rentGross = sum(Object.values(income.rent))
@@ -73,20 +74,21 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   )
 
   const incomes: IncomeLine[] = [
-    { id: '40-1-2', label: 'เงินเดือน/ค่าจ้าง และงานรับจ้างทั่วไป 40(1)(2)', gross: employmentGross, expense: employmentExpense },
-    { id: '40-3', label: 'ค่าลิขสิทธิ์ 40(3)', gross: income.royalty, expense: Math.min(income.royalty * ex.royalty.rate, ex.royalty.max) },
-    { id: '40-5', label: 'ค่าเช่าทรัพย์สิน 40(5)', gross: rentGross, expense: rentExpense },
+    { id: '40-1-2', label: 'เงินเดือน/ค่าจ้าง และงานรับจ้างทั่วไป 40(1)(2)', labelEn: 'Salary, wages and general employment 40(1)(2)', gross: employmentGross, expense: employmentExpense },
+    { id: '40-3', label: 'ค่าลิขสิทธิ์ 40(3)', labelEn: 'Royalties 40(3)', gross: income.royalty, expense: Math.min(income.royalty * ex.royalty.rate, ex.royalty.max) },
+    { id: '40-5', label: 'ค่าเช่าทรัพย์สิน 40(5)', labelEn: 'Property rent 40(5)', gross: rentGross, expense: rentExpense },
     {
       id: '40-6',
       label: 'วิชาชีพอิสระ 40(6)',
+      labelEn: 'Liberal professions 40(6)',
       gross: income.professional.medical + income.professional.other,
       expense: income.professional.medical * ex.professional.medical + income.professional.other * ex.professional.other,
     },
-    { id: '40-4', label: 'เงินปันผล/ดอกเบี้ย 40(4)', gross: investmentGross, expense: 0 },
-    { id: 'foreign-1', label: 'ค่าจ้างจากต่างประเทศที่นำเข้าไทย', gross: fx.employment, expense: foreignEmploymentExpense },
-    { id: 'foreign-4', label: 'เงินได้จากการลงทุนต่างประเทศที่นำเข้าไทย', gross: fx.investment, expense: 0 },
-    { id: '40-7', label: 'รับเหมา 40(7)', gross: income.contract.amount, expense: flatOrActual(income.contract, ex.contract.rate) },
-    { id: '40-8', label: 'ธุรกิจ/ค้าขาย/อื่น ๆ 40(8)', gross: income.business.amount, expense: flatOrActual(income.business, ex.business.rate) },
+    { id: '40-4', label: 'เงินปันผล/ดอกเบี้ย 40(4)', labelEn: 'Dividends / interest 40(4)', gross: investmentGross, expense: 0 },
+    { id: 'foreign-1', label: 'ค่าจ้างจากต่างประเทศที่นำเข้าไทย', labelEn: 'Foreign employment income brought into Thailand', gross: fx.employment, expense: foreignEmploymentExpense },
+    { id: 'foreign-4', label: 'เงินได้จากการลงทุนต่างประเทศที่นำเข้าไทย', labelEn: 'Foreign investment income brought into Thailand', gross: fx.investment, expense: 0 },
+    { id: '40-7', label: 'รับเหมา 40(7)', labelEn: 'Contracting 40(7)', gross: income.contract.amount, expense: flatOrActual(income.contract, ex.contract.rate) },
+    { id: '40-8', label: 'ธุรกิจ/ค้าขาย/อื่น ๆ 40(8)', labelEn: 'Business / trade / other 40(8)', gross: income.business.amount, expense: flatOrActual(income.business, ex.business.rate) },
   ]
     .filter((l) => l.gross > 0)
     .map((l) => ({ ...l, expense: round2(l.expense) }))
@@ -103,9 +105,9 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     if (line.claimed > 0 || line.allowed > 0) lines.push({ ...line, allowed: round2(line.allowed) })
   }
 
-  add({ id: 'personal', label: 'ส่วนตัว', group: 'family', claimed: r.personal, allowed: r.personal })
+  add({ id: 'personal', label: 'ส่วนตัว', labelEn: 'Personal allowance', group: 'family', claimed: r.personal, allowed: r.personal })
   if (profile.married && !profile.spouseHasIncome) {
-    add({ id: 'spouse', label: 'คู่สมรส (ไม่มีเงินได้)', group: 'family', claimed: r.spouse, allowed: r.spouse })
+    add({ id: 'spouse', label: 'คู่สมรส (ไม่มีเงินได้)', labelEn: 'Spouse (no income)', group: 'family', claimed: r.spouse, allowed: r.spouse })
   }
   const childAmounts = d.children.map((year, i) => (i > 0 && year >= 2561 ? r.childSecondPlusBornFrom2561 : r.child))
   if (childAmounts.length) {
@@ -113,35 +115,41 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     add({
       id: 'children',
       label: `บุตร ${childAmounts.length} คน`,
+      labelEn: childAmounts.length === 1 ? '1 child' : `${childAmounts.length} children`,
       group: 'family',
       claimed: sum(childAmounts),
       allowed: sum(childAmounts),
       note: bonus ? `บุตรคนที่ 2 ขึ้นไปที่เกิดตั้งแต่ปี 2561 ได้คนละ ${r.childSecondPlusBornFrom2561.toLocaleString()} บาท` : undefined,
+      noteEn: bonus
+        ? `Second and later children born from 2561 (2018) get ${r.childSecondPlusBornFrom2561.toLocaleString()} baht each`
+        : undefined,
     })
   }
   const parents = Math.min(d.parents, 4)
-  add({ id: 'parents', label: `อุปการะบิดามารดา ${parents} คน`, group: 'family', claimed: parents * r.parent, allowed: parents * r.parent })
-  add({ id: 'disabledCare', label: `อุปการะผู้พิการ/ทุพพลภาพ ${d.disabledCare} คน`, group: 'family', claimed: d.disabledCare * r.disabledCare, allowed: d.disabledCare * r.disabledCare })
-  add({ id: 'prenatal', label: 'ฝากครรภ์และคลอดบุตร', group: 'family', claimed: d.prenatal, allowed: clamp(d.prenatal, r.prenatal) })
+  add({ id: 'parents', label: `อุปการะบิดามารดา ${parents} คน`, labelEn: `Parents supported: ${parents}`, group: 'family', claimed: parents * r.parent, allowed: parents * r.parent })
+  add({ id: 'disabledCare', label: `อุปการะผู้พิการ/ทุพพลภาพ ${d.disabledCare} คน`, labelEn: `Disabled dependants supported: ${d.disabledCare}`, group: 'family', claimed: d.disabledCare * r.disabledCare, allowed: d.disabledCare * r.disabledCare })
+  add({ id: 'prenatal', label: 'ฝากครรภ์และคลอดบุตร', labelEn: 'Pregnancy and childbirth', group: 'family', claimed: d.prenatal, allowed: clamp(d.prenatal, r.prenatal) })
 
-  add({ id: 'socialSecurity', label: 'เงินสมทบประกันสังคม', group: 'insurance', claimed: d.socialSecurity, allowed: clamp(d.socialSecurity, r.socialSecurity) })
+  add({ id: 'socialSecurity', label: 'เงินสมทบประกันสังคม', labelEn: 'Social security contributions', group: 'insurance', claimed: d.socialSecurity, allowed: clamp(d.socialSecurity, r.socialSecurity) })
 
   // ประกันชีวิต + สุขภาพ รวมกันไม่เกินเพดาน
   const life = clamp(d.lifeInsurance, r.lifeInsurance)
   const health = Math.min(clamp(d.healthInsurance, r.healthInsurance), Math.max(0, r.lifeHealthCombined - life))
-  add({ id: 'lifeInsurance', label: 'เบี้ยประกันชีวิต', group: 'insurance', claimed: d.lifeInsurance, allowed: life })
+  add({ id: 'lifeInsurance', label: 'เบี้ยประกันชีวิต', labelEn: 'Life insurance premiums', group: 'insurance', claimed: d.lifeInsurance, allowed: life })
   add({
     id: 'healthInsurance',
     label: 'เบี้ยประกันสุขภาพตนเอง',
+    labelEn: 'Own health insurance premiums',
     group: 'insurance',
     claimed: d.healthInsurance,
     allowed: health,
     note: health < clamp(d.healthInsurance, r.healthInsurance) ? `รวมกับประกันชีวิตแล้วต้องไม่เกิน ${r.lifeHealthCombined.toLocaleString()} บาท` : undefined,
+    noteEn: health < clamp(d.healthInsurance, r.healthInsurance) ? `Combined with life insurance, capped at ${r.lifeHealthCombined.toLocaleString()} baht` : undefined,
   })
   if (profile.married && !profile.spouseHasIncome) {
-    add({ id: 'spouseLifeInsurance', label: 'เบี้ยประกันชีวิตคู่สมรส', group: 'insurance', claimed: d.spouseLifeInsurance, allowed: clamp(d.spouseLifeInsurance, r.spouseLifeInsurance) })
+    add({ id: 'spouseLifeInsurance', label: 'เบี้ยประกันชีวิตคู่สมรส', labelEn: "Spouse's life insurance premiums", group: 'insurance', claimed: d.spouseLifeInsurance, allowed: clamp(d.spouseLifeInsurance, r.spouseLifeInsurance) })
   }
-  add({ id: 'parentHealthInsurance', label: 'เบี้ยประกันสุขภาพบิดามารดา', group: 'insurance', claimed: d.parentHealthInsurance, allowed: clamp(d.parentHealthInsurance, r.parentHealthInsurance) })
+  add({ id: 'parentHealthInsurance', label: 'เบี้ยประกันสุขภาพบิดามารดา', labelEn: "Parents' health insurance premiums", group: 'insurance', claimed: d.parentHealthInsurance, allowed: clamp(d.parentHealthInsurance, r.parentHealthInsurance) })
 
   // กลุ่มเกษียณ (รวมกันไม่เกิน retirementCombined)
   const pensionCap = Math.min(totalIncome * r.pensionInsurance.rate, r.pensionInsurance.max)
@@ -167,40 +175,47 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     over -= cut
   }
   const capNote = retirementCut ? `กลุ่มเกษียณรวมกันต้องไม่เกิน ${r.retirementCombined.toLocaleString()} บาท` : undefined
+  const capNoteEn = retirementCut ? `The retirement group is capped at ${r.retirementCombined.toLocaleString()} baht combined` : undefined
   add({
     id: 'pensionInsurance',
     label: 'เบี้ยประกันชีวิตแบบบำนาญ',
+    labelEn: 'Pension life insurance premiums',
     group: 'saving',
     claimed: d.pensionInsurance,
     allowed: retirement.pension + pensionOverflow,
     note: pensionOverflow > 0 ? `ใช้สิทธิประกันชีวิตที่เหลือ ${pensionOverflow.toLocaleString()} บาท` : undefined,
+    noteEn: pensionOverflow > 0 ? `Uses ${pensionOverflow.toLocaleString()} baht of the remaining life insurance allowance` : undefined,
   })
-  add({ id: 'pvd', label: 'กองทุนสำรองเลี้ยงชีพ (PVD)', group: 'saving', claimed: d.pvd, allowed: retirement.pvd, note: capNote })
-  add({ id: 'gpf', label: 'กบข. / กองทุนสงเคราะห์ครูเอกชน', group: 'saving', claimed: d.gpf, allowed: retirement.gpf, note: capNote })
-  add({ id: 'nsf', label: 'กองทุนการออมแห่งชาติ (กอช.)', group: 'saving', claimed: d.nsf, allowed: retirement.nsf })
-  if (r.ssf) add({ id: 'ssf', label: 'กองทุน SSF', group: 'saving', claimed: d.ssf, allowed: retirement.ssf, note: capNote })
-  else if (d.ssf > 0) warnings.push(`ปีภาษี ${rules.taxYear} ใช้ SSF ลดหย่อนไม่ได้แล้ว`)
-  add({ id: 'rmf', label: 'กองทุน RMF', group: 'saving', claimed: d.rmf, allowed: retirement.rmf, note: capNote })
+  add({ id: 'pvd', label: 'กองทุนสำรองเลี้ยงชีพ (PVD)', labelEn: 'Provident fund (PVD)', group: 'saving', claimed: d.pvd, allowed: retirement.pvd, note: capNote, noteEn: capNoteEn })
+  add({ id: 'gpf', label: 'กบข. / กองทุนสงเคราะห์ครูเอกชน', labelEn: 'GPF / Private school teachers welfare fund', group: 'saving', claimed: d.gpf, allowed: retirement.gpf, note: capNote, noteEn: capNoteEn })
+  add({ id: 'nsf', label: 'กองทุนการออมแห่งชาติ (กอช.)', labelEn: 'National Savings Fund (NSF)', group: 'saving', claimed: d.nsf, allowed: retirement.nsf })
+  if (r.ssf) add({ id: 'ssf', label: 'กองทุน SSF', labelEn: 'SSF fund', group: 'saving', claimed: d.ssf, allowed: retirement.ssf, note: capNote, noteEn: capNoteEn })
+  else if (d.ssf > 0) {
+    warnings.push(`ปีภาษี ${rules.taxYear} ใช้ SSF ลดหย่อนไม่ได้แล้ว`)
+    warningsEn.push(`SSF is no longer deductible in tax year ${rules.taxYear}`)
+  }
+  add({ id: 'rmf', label: 'กองทุน RMF', labelEn: 'RMF fund', group: 'saving', claimed: d.rmf, allowed: retirement.rmf, note: capNote, noteEn: capNoteEn })
   if (r.thaiEsg) {
-    add({ id: 'thaiEsg', label: 'กองทุน ThaiESG / ThaiESGX (เงินใหม่)', group: 'saving', claimed: d.thaiEsg, allowed: clamp(d.thaiEsg, Math.min(totalIncome * r.thaiEsg.rate, r.thaiEsg.max)) })
+    add({ id: 'thaiEsg', label: 'กองทุน ThaiESG / ThaiESGX (เงินใหม่)', labelEn: 'ThaiESG / ThaiESGX fund (new money)', group: 'saving', claimed: d.thaiEsg, allowed: clamp(d.thaiEsg, Math.min(totalIncome * r.thaiEsg.rate, r.thaiEsg.max)) })
   }
   if (r.thaiEsgxLtf > 0) {
-    add({ id: 'thaiEsgxLtf', label: 'ThaiESGX (สับเปลี่ยนจาก LTF)', group: 'saving', claimed: d.thaiEsgxLtf, allowed: clamp(d.thaiEsgxLtf, r.thaiEsgxLtf) })
+    add({ id: 'thaiEsgxLtf', label: 'ThaiESGX (สับเปลี่ยนจาก LTF)', labelEn: 'ThaiESGX (switched from LTF)', group: 'saving', claimed: d.thaiEsgxLtf, allowed: clamp(d.thaiEsgxLtf, r.thaiEsgxLtf) })
   }
 
-  add({ id: 'homeLoanInterest', label: 'ดอกเบี้ยเงินกู้ซื้อที่อยู่อาศัย', group: 'other', claimed: d.homeLoanInterest, allowed: clamp(d.homeLoanInterest, r.homeLoanInterest) })
-  add({ id: 'socialEnterprise', label: 'ลงทุนในวิสาหกิจเพื่อสังคม', group: 'other', claimed: d.socialEnterprise, allowed: clamp(d.socialEnterprise, r.socialEnterprise) })
-  add({ id: 'politicalDonation', label: 'บริจาคพรรคการเมือง', group: 'other', claimed: d.politicalDonation, allowed: clamp(d.politicalDonation, r.politicalDonation) })
+  add({ id: 'homeLoanInterest', label: 'ดอกเบี้ยเงินกู้ซื้อที่อยู่อาศัย', labelEn: 'Home loan interest', group: 'other', claimed: d.homeLoanInterest, allowed: clamp(d.homeLoanInterest, r.homeLoanInterest) })
+  add({ id: 'socialEnterprise', label: 'ลงทุนในวิสาหกิจเพื่อสังคม', labelEn: 'Investment in social enterprises', group: 'other', claimed: d.socialEnterprise, allowed: clamp(d.socialEnterprise, r.socialEnterprise) })
+  add({ id: 'politicalDonation', label: 'บริจาคพรรคการเมือง', labelEn: 'Political party donations', group: 'other', claimed: d.politicalDonation, allowed: clamp(d.politicalDonation, r.politicalDonation) })
 
   for (const m of rules.measures) {
     const values = input.measures[m.id]
     const claimed = sum(Object.values(values ?? {}).map((v) => v || 0))
-    add({ id: `measure:${m.id}`, label: m.label, group: 'measure', claimed, allowed: measureDeduction(m, values) })
+    add({ id: `measure:${m.id}`, label: m.label, labelEn: m.labelEn || m.label, group: 'measure', claimed, allowed: measureDeduction(m, values) })
   }
 
   for (const line of lines) {
     if (line.claimed > line.allowed && !line.note && line.group !== 'family') {
       line.note = `เกินสิทธิ ${round2(line.claimed - line.allowed).toLocaleString()} บาท ส่วนที่เกินนำมาลดหย่อนไม่ได้`
+      line.noteEn = `${round2(line.claimed - line.allowed).toLocaleString()} baht over the limit; the excess cannot be deducted`
     }
   }
 
@@ -210,19 +225,23 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
   add({
     id: 'donationEducation',
     label: 'บริจาคการศึกษา/กีฬา/โรงพยาบาลรัฐ (2 เท่า)',
+    labelEn: 'Education / sports / public hospital donations (2x)',
     group: 'donation',
     claimed: d.donationEducation,
     allowed: eduAllowed,
     note: d.donationEducation > 0 ? `หักได้ 2 เท่า แต่ไม่เกิน ${r.donationCapRate * 100}% ของเงินได้หลังหักลดหย่อน` : undefined,
+    noteEn: d.donationEducation > 0 ? `Counts double, but capped at ${r.donationCapRate * 100}% of income after deductions` : undefined,
   })
   const genAllowed = Math.min(d.donationGeneral, (beforeDonation - eduAllowed) * r.donationCapRate)
   add({
     id: 'donationGeneral',
     label: 'บริจาคทั่วไป',
+    labelEn: 'General donations',
     group: 'donation',
     claimed: d.donationGeneral,
     allowed: genAllowed,
     note: genAllowed < d.donationGeneral ? `ไม่เกิน ${r.donationCapRate * 100}% ของเงินได้หลังหักลดหย่อน` : undefined,
+    noteEn: genAllowed < d.donationGeneral ? `Capped at ${r.donationCapRate * 100}% of income after deductions` : undefined,
   })
 
   const totalDeductions = round2(sum(lines.map((l) => l.allowed)))
@@ -267,5 +286,6 @@ export function calculateTax(input: TaxInput, rules: TaxRules): TaxResult {
     effectiveRate: totalIncome > 0 ? tax / totalIncome : 0,
     marginalRate: marginalRate(netIncome, rules),
     warnings,
+    warningsEn,
   }
 }

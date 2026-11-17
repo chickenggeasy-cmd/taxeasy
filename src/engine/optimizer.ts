@@ -6,33 +6,41 @@ export type BudgetGoal = 'flex' | 'retire' | 'protect'
 interface Product {
   key: DeductionKey
   label: string
+  labelEn: string
   hint: string
+  hintEn: string
 }
 
 const PRODUCTS: Record<string, Product> = {
-  thaiEsg: { key: 'thaiEsg', label: 'กองทุน ThaiESG', hint: 'ถือครองตามระยะที่กำหนด ไม่ต้องรอเกษียณ' },
-  rmf: { key: 'rmf', label: 'กองทุน RMF', hint: 'ถือจนอายุ 55 ปี และอย่างน้อย 5 ปี' },
-  pensionInsurance: { key: 'pensionInsurance', label: 'ประกันบำนาญ', hint: 'จ่ายเบี้ยตามสัญญา ได้เงินคืนหลังเกษียณ' },
-  nsf: { key: 'nsf', label: 'กอช.', hint: 'สำหรับผู้ไม่มีบำนาญอื่น รัฐสมทบเพิ่มให้' },
-  lifeInsurance: { key: 'lifeInsurance', label: 'ประกันชีวิต', hint: 'กรมธรรม์ 10 ปีขึ้นไป' },
-  healthInsurance: { key: 'healthInsurance', label: 'ประกันสุขภาพ', hint: 'ได้ความคุ้มครองค่ารักษาด้วย' },
+  thaiEsg: { key: 'thaiEsg', label: 'กองทุน ThaiESG', labelEn: 'ThaiESG fund', hint: 'ถือครองตามระยะที่กำหนด ไม่ต้องรอเกษียณ', hintEn: 'Hold for the set period; no need to wait for retirement' },
+  rmf: { key: 'rmf', label: 'กองทุน RMF', labelEn: 'RMF fund', hint: 'ถือจนอายุ 55 ปี และอย่างน้อย 5 ปี', hintEn: 'Hold until age 55 and for at least 5 years' },
+  pensionInsurance: { key: 'pensionInsurance', label: 'ประกันบำนาญ', labelEn: 'Pension insurance', hint: 'จ่ายเบี้ยตามสัญญา ได้เงินคืนหลังเกษียณ', hintEn: 'Pay premiums as agreed; money comes back after retirement' },
+  nsf: { key: 'nsf', label: 'กอช.', labelEn: 'National Savings Fund (NSF)', hint: 'สำหรับผู้ไม่มีบำนาญอื่น รัฐสมทบเพิ่มให้', hintEn: 'For people without another pension; the government adds to it' },
+  lifeInsurance: { key: 'lifeInsurance', label: 'ประกันชีวิต', labelEn: 'Life insurance', hint: 'กรมธรรม์ 10 ปีขึ้นไป', hintEn: 'Policies of 10 years or more' },
+  healthInsurance: { key: 'healthInsurance', label: 'ประกันสุขภาพ', labelEn: 'Health insurance', hint: 'ได้ความคุ้มครองค่ารักษาด้วย', hintEn: 'Also covers medical costs' },
 }
 
 /** ลำดับที่เติมเงินตามเป้าหมาย ทุกรายการลดภาษีบาทต่อบาทเท่ากัน ต่างกันที่เงื่อนไขและประโยชน์อื่น */
-export const GOALS: Record<BudgetGoal, { label: string; hint: string; order: DeductionKey[] }> = {
+export const GOALS: Record<BudgetGoal, { label: string; labelEn: string; hint: string; hintEn: string; order: DeductionKey[] }> = {
   flex: {
     label: 'ยืดหยุ่น',
+    labelEn: 'Flexible',
     hint: 'ถอนได้เร็วที่สุด',
+    hintEn: 'Quickest to withdraw',
     order: ['thaiEsg', 'rmf', 'healthInsurance', 'lifeInsurance', 'pensionInsurance', 'nsf'],
   },
   retire: {
     label: 'ออมเกษียณ',
+    labelEn: 'Retirement',
     hint: 'เน้นเงินก้อนหลังเกษียณ',
+    hintEn: 'Focus on a lump sum after retirement',
     order: ['rmf', 'pensionInsurance', 'nsf', 'thaiEsg', 'lifeInsurance', 'healthInsurance'],
   },
   protect: {
     label: 'ความคุ้มครอง',
+    labelEn: 'Protection',
     hint: 'เน้นประกันก่อน',
+    hintEn: 'Insurance first',
     order: ['healthInsurance', 'lifeInsurance', 'pensionInsurance', 'rmf', 'thaiEsg', 'nsf'],
   },
 }
@@ -40,7 +48,9 @@ export const GOALS: Record<BudgetGoal, { label: string; hint: string; order: Ded
 export interface Allocation {
   key: DeductionKey
   label: string
+  labelEn: string
   hint: string
+  hintEn: string
   amount: number
 }
 

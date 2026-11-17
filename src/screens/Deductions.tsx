@@ -1,15 +1,20 @@
 import { SpouseCompare } from '../components/SpouseCompare'
 import { Disclosure, MoneyField, PageHero, Section, Segmented, Stepper, Toggle } from '../components/ui'
-import type { DeductionKey, TaxInput, TaxResult, TaxRules } from '../engine/types'
+import type { DeductionKey, DeductionLine, TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt, pct } from '../lib/format'
+import { useLang, useT } from '../lib/lang'
 
 type Update = (fn: (draft: TaxInput) => void) => void
 
 export function Deductions({ input, update, rules, result }: { input: TaxInput; update: Update; rules: TaxRules; result: TaxResult }) {
+  const t = useT()
+  const en = useLang() === 'en'
   const r = rules.deductions
   const p = input.profile
   const line = (id: string) => result.deductions.find((l) => l.id === id)
+  const noteOf = (l: DeductionLine | undefined) => (l ? (en ? (l.noteEn ?? l.note) : l.note) : undefined)
   const groupTotal = (...ids: string[]) => ids.reduce((s, id) => s + (line(id)?.allowed ?? 0), 0)
+  const claimed = (n: number) => t(`ใช้สิทธิแล้ว ${fmt(n)} บาท`, `${fmt(n)} baht claimed`)
 
   const money = (key: DeductionKey, label: string, max?: number, hint?: string) => (
     <MoneyField
@@ -20,7 +25,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
       max={max}
       hint={hint}
       allowed={line(key)?.allowed ?? 0}
-      note={line(key)?.note}
+      note={noteOf(line(key))}
     />
   )
 
@@ -31,53 +36,77 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
 
   return (
     <div className="anim-stagger flex flex-col gap-4">
-      <PageHero art="deductions" title="ค่าลดหย่อน" subtitle={`ใช้สิทธิแล้ว ${fmt(result.totalDeductions)} บาท · แอปตรวจเพดานให้ทุกช่อง`} />
-      <Section icon="profile" title="เกี่ยวกับคุณ" subtitle="ตอบตามจริง แอปจะเลือกสิทธิที่คุณได้ให้เอง">
+      <PageHero
+        art="deductions"
+        title={t('ค่าลดหย่อน', 'Deductions')}
+        subtitle={t(`ใช้สิทธิแล้ว ${fmt(result.totalDeductions)} บาท · แอปตรวจเพดานให้ทุกช่อง`, `${fmt(result.totalDeductions)} baht claimed · every cap is checked for you`)}
+      />
+      <Section icon="profile" title={t('เกี่ยวกับคุณ', 'About you')} subtitle={t('ตอบตามจริง แอปจะเลือกสิทธิที่คุณได้ให้เอง', 'Answer honestly and the app picks the allowances you qualify for')}>
         <Segmented
-          label="สถานะสมรส"
+          label={t('สถานะสมรส', 'Marital status')}
           value={p.married ? 'married' : 'single'}
           options={[
-            { value: 'single', label: 'โสด / หย่า' },
-            { value: 'married', label: 'สมรสจดทะเบียน' },
+            { value: 'single', label: t('โสด / หย่า', 'Single / divorced') },
+            { value: 'married', label: t('สมรสจดทะเบียน', 'Legally married') },
           ]}
           onChange={(v) => update((d) => void (d.profile.married = v === 'married'))}
         />
         {p.married && (
           <Toggle
-            label="คู่สมรสมีเงินได้"
-            hint={p.spouseHasIncome ? 'ยื่นแยก: ใช้ลดหย่อนคู่สมรสไม่ได้' : `ลดหย่อนคู่สมรสได้ ${fmt(r.spouse)} บาท`}
+            label={t('คู่สมรสมีเงินได้', 'Spouse has income')}
+            hint={
+              p.spouseHasIncome
+                ? t('ยื่นแยก: ใช้ลดหย่อนคู่สมรสไม่ได้', 'Filing separately: no spouse allowance')
+                : t(`ลดหย่อนคู่สมรสได้ ${fmt(r.spouse)} บาท`, `Spouse allowance: ${fmt(r.spouse)} baht`)
+            }
             checked={p.spouseHasIncome}
             onChange={(v) => update((d) => void (d.profile.spouseHasIncome = v))}
           />
         )}
         {p.married && p.spouseHasIncome && (
-          <Disclosure icon="family" title="ข้อมูลคู่สมรส" summary={sp.salary + sp.freelance ? `เงินได้ ${fmt(sp.salary + sp.freelance)} บาท · ใช้เทียบยื่นแยก/ยื่นรวม` : 'กรอกเพื่อเทียบยื่นแยก/ยื่นรวม'}>
-            <MoneyField id="sp-salary" label="เงินเดือน + โบนัสทั้งปีของคู่สมรส" value={sp.salary} onChange={setSp('salary')} />
-            <MoneyField id="sp-freelance" label="งานฟรีแลนซ์ 40(2) ของคู่สมรส" value={sp.freelance} onChange={setSp('freelance')} />
-            <MoneyField id="sp-withheld" label="ภาษีที่คู่สมรสถูกหัก ณ ที่จ่าย" value={sp.withheld} onChange={setSp('withheld')} />
-            <MoneyField id="sp-ss" label="ประกันสังคมของคู่สมรส" value={sp.socialSecurity} onChange={setSp('socialSecurity')} max={r.socialSecurity} />
-            <MoneyField id="sp-life" label="เบี้ยประกันชีวิตของคู่สมรส" value={sp.lifeInsurance} onChange={setSp('lifeInsurance')} />
-            <MoneyField id="sp-health" label="เบี้ยประกันสุขภาพของคู่สมรส" value={sp.healthInsurance} onChange={setSp('healthInsurance')} />
-            <MoneyField id="sp-pvd" label="PVD ของคู่สมรส" value={sp.pvd} onChange={setSp('pvd')} />
-            <MoneyField id="sp-rmf" label="RMF ของคู่สมรส" value={sp.rmf} onChange={setSp('rmf')} />
-            <MoneyField id="sp-esg" label="ThaiESG ของคู่สมรส" value={sp.thaiEsg} onChange={setSp('thaiEsg')} />
-            <Stepper label="บิดามารดาของคู่สมรสที่อุปการะ" value={sp.parents} max={2} onChange={(n) => update((d) => void (d.spouse.parents = n))} />
+          <Disclosure
+            icon="family"
+            title={t('ข้อมูลคู่สมรส', "Spouse's details")}
+            summary={
+              sp.salary + sp.freelance
+                ? t(`เงินได้ ${fmt(sp.salary + sp.freelance)} บาท · ใช้เทียบยื่นแยก/ยื่นรวม`, `Income ${fmt(sp.salary + sp.freelance)} baht · used to compare separate and joint filing`)
+                : t('กรอกเพื่อเทียบยื่นแยก/ยื่นรวม', 'Fill in to compare separate and joint filing')
+            }
+          >
+            <MoneyField id="sp-salary" label={t('เงินเดือน + โบนัสทั้งปีของคู่สมรส', "Spouse's annual salary + bonus")} value={sp.salary} onChange={setSp('salary')} />
+            <MoneyField id="sp-freelance" label={t('งานฟรีแลนซ์ 40(2) ของคู่สมรส', "Spouse's freelance income 40(2)")} value={sp.freelance} onChange={setSp('freelance')} />
+            <MoneyField id="sp-withheld" label={t('ภาษีที่คู่สมรสถูกหัก ณ ที่จ่าย', "Spouse's tax withheld")} value={sp.withheld} onChange={setSp('withheld')} />
+            <MoneyField id="sp-ss" label={t('ประกันสังคมของคู่สมรส', "Spouse's social security")} value={sp.socialSecurity} onChange={setSp('socialSecurity')} max={r.socialSecurity} />
+            <MoneyField id="sp-life" label={t('เบี้ยประกันชีวิตของคู่สมรส', "Spouse's life insurance premiums")} value={sp.lifeInsurance} onChange={setSp('lifeInsurance')} />
+            <MoneyField id="sp-health" label={t('เบี้ยประกันสุขภาพของคู่สมรส', "Spouse's health insurance premiums")} value={sp.healthInsurance} onChange={setSp('healthInsurance')} />
+            <MoneyField id="sp-pvd" label={t('PVD ของคู่สมรส', "Spouse's PVD")} value={sp.pvd} onChange={setSp('pvd')} />
+            <MoneyField id="sp-rmf" label={t('RMF ของคู่สมรส', "Spouse's RMF")} value={sp.rmf} onChange={setSp('rmf')} />
+            <MoneyField id="sp-esg" label={t('ThaiESG ของคู่สมรส', "Spouse's ThaiESG")} value={sp.thaiEsg} onChange={setSp('thaiEsg')} />
+            <Stepper
+              label={t('บิดามารดาของคู่สมรสที่อุปการะ', "Spouse's parents supported")}
+              value={sp.parents}
+              max={2}
+              onChange={(n) => update((d) => void (d.spouse.parents = n))}
+            />
             <SpouseCompare input={input} rules={rules} />
           </Disclosure>
         )}
         <Toggle
-          label="อายุ 65 ปีขึ้นไป หรือเป็นผู้พิการ"
-          hint={`เงินได้ ${fmt(rules.elderlyExemption)} บาทแรกได้รับยกเว้น`}
+          label={t('อายุ 65 ปีขึ้นไป หรือเป็นผู้พิการ', 'Aged 65 or over, or disabled')}
+          hint={t(`เงินได้ ${fmt(rules.elderlyExemption)} บาทแรกได้รับยกเว้น`, `The first ${fmt(rules.elderlyExemption)} baht of income is exempt`)}
           checked={p.elderlyOrDisabled}
           onChange={(v) => update((d) => void (d.profile.elderlyOrDisabled = v))}
         />
       </Section>
 
-      <Section icon="family" title="ครอบครัว" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('children', 'parents', 'disabledCare', 'prenatal'))} บาท`}>
+      <Section icon="family" title={t('ครอบครัว', 'Family')} subtitle={claimed(groupTotal('children', 'parents', 'disabledCare', 'prenatal'))}>
         <div className="flex flex-col gap-3">
           <Stepper
-            label="บุตร"
-            hint={`คนละ ${fmt(r.child)} · คนที่ 2 ขึ้นไปที่เกิดตั้งแต่ 2561 คนละ ${fmt(r.childSecondPlusBornFrom2561)}`}
+            label={t('บุตร', 'Children')}
+            hint={t(
+              `คนละ ${fmt(r.child)} · คนที่ 2 ขึ้นไปที่เกิดตั้งแต่ 2561 คนละ ${fmt(r.childSecondPlusBornFrom2561)}`,
+              `${fmt(r.child)} each · second and later children born from 2561 (2018): ${fmt(r.childSecondPlusBornFrom2561)} each`,
+            )}
             value={kids.length}
             max={10}
             onChange={(n) =>
@@ -91,7 +120,7 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
           {kids.map((year, i) => (
             <div key={i} className="flex items-center justify-between gap-3 rounded-xl bg-paper px-3 py-2">
               <label htmlFor={`kid-${i}`} className="text-sm">
-                บุตรคนที่ {i + 1} เกิดปี พ.ศ.
+                {t(`บุตรคนที่ ${i + 1} เกิดปี พ.ศ.`, `Child ${i + 1}, birth year (B.E.)`)}
               </label>
               <input
                 id={`kid-${i}`}
@@ -104,59 +133,88 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
           ))}
         </div>
         <Stepper
-          label="บิดามารดาที่อุปการะ"
-          hint={`อายุ 60 ปีขึ้นไป เงินได้ไม่เกิน 30,000 บาท/ปี · คนละ ${fmt(r.parent)}`}
+          label={t('บิดามารดาที่อุปการะ', 'Parents you support')}
+          hint={t(`อายุ 60 ปีขึ้นไป เงินได้ไม่เกิน 30,000 บาท/ปี · คนละ ${fmt(r.parent)}`, `Aged 60+, income up to 30,000 baht/year · ${fmt(r.parent)} each`)}
           value={input.deductions.parents}
           max={4}
           onChange={(n) => update((d) => void (d.deductions.parents = n))}
         />
         <Stepper
-          label="ผู้พิการ/ทุพพลภาพที่อุปการะ"
-          hint={`มีบัตรประจำตัวคนพิการ · คนละ ${fmt(r.disabledCare)}`}
+          label={t('ผู้พิการ/ทุพพลภาพที่อุปการะ', 'Disabled dependants you support')}
+          hint={t(`มีบัตรประจำตัวคนพิการ · คนละ ${fmt(r.disabledCare)}`, `Must hold a disability ID card · ${fmt(r.disabledCare)} each`)}
           value={input.deductions.disabledCare}
           max={10}
           onChange={(n) => update((d) => void (d.deductions.disabledCare = n))}
         />
-        {money('prenatal', 'ค่าฝากครรภ์และคลอดบุตร', r.prenatal, 'ต่อการตั้งครรภ์แต่ละครั้ง')}
+        {money('prenatal', t('ค่าฝากครรภ์และคลอดบุตร', 'Pregnancy and childbirth costs'), r.prenatal, t('ต่อการตั้งครรภ์แต่ละครั้ง', 'Per pregnancy'))}
       </Section>
 
-      <Section icon="shield" title="ประกันและประกันสังคม" subtitle={`ใช้สิทธิแล้ว ${fmt(groupTotal('socialSecurity', 'lifeInsurance', 'healthInsurance', 'spouseLifeInsurance', 'parentHealthInsurance'))} บาท`}>
-        {money('socialSecurity', 'เงินสมทบประกันสังคม', r.socialSecurity, 'ดูใน 50 ทวิ')}
-        {money('lifeInsurance', 'เบี้ยประกันชีวิต', r.lifeInsurance, 'กรมธรรม์ 10 ปีขึ้นไป')}
-        {money('healthInsurance', 'เบี้ยประกันสุขภาพตนเอง', r.healthInsurance, `รวมกับประกันชีวิตไม่เกิน ${fmt(r.lifeHealthCombined)}`)}
-        {p.married && !p.spouseHasIncome && money('spouseLifeInsurance', 'เบี้ยประกันชีวิตคู่สมรส', r.spouseLifeInsurance)}
-        {money('parentHealthInsurance', 'เบี้ยประกันสุขภาพบิดามารดา', r.parentHealthInsurance)}
+      <Section
+        icon="shield"
+        title={t('ประกันและประกันสังคม', 'Insurance and social security')}
+        subtitle={claimed(groupTotal('socialSecurity', 'lifeInsurance', 'healthInsurance', 'spouseLifeInsurance', 'parentHealthInsurance'))}
+      >
+        {money('socialSecurity', t('เงินสมทบประกันสังคม', 'Social security contributions'), r.socialSecurity, t('ดูใน 50 ทวิ', 'Shown on the 50 Tawi'))}
+        {money('lifeInsurance', t('เบี้ยประกันชีวิต', 'Life insurance premiums'), r.lifeInsurance, t('กรมธรรม์ 10 ปีขึ้นไป', 'Policies of 10 years or more'))}
+        {money(
+          'healthInsurance',
+          t('เบี้ยประกันสุขภาพตนเอง', 'Own health insurance premiums'),
+          r.healthInsurance,
+          t(`รวมกับประกันชีวิตไม่เกิน ${fmt(r.lifeHealthCombined)}`, `Up to ${fmt(r.lifeHealthCombined)} combined with life insurance`),
+        )}
+        {p.married && !p.spouseHasIncome && money('spouseLifeInsurance', t('เบี้ยประกันชีวิตคู่สมรส', "Spouse's life insurance premiums"), r.spouseLifeInsurance)}
+        {money('parentHealthInsurance', t('เบี้ยประกันสุขภาพบิดามารดา', "Parents' health insurance premiums"), r.parentHealthInsurance)}
       </Section>
 
-      <Section icon="saving" title="ออมเพื่อเกษียณและกองทุน" subtitle={`กลุ่มเกษียณรวมกันไม่เกิน ${fmt(r.retirementCombined)} บาท`}>
-        {money('pensionInsurance', 'เบี้ยประกันชีวิตแบบบำนาญ', r.pensionInsurance.max, `${pct(r.pensionInsurance.rate)} ของเงินได้`)}
-        {money('pvd', 'กองทุนสำรองเลี้ยงชีพ (PVD) ส่วนที่คุณจ่าย', r.pvd.max, `${pct(r.pvd.rate)} ของค่าจ้าง`)}
-        {money('gpf', 'กบข. / กองทุนสงเคราะห์ครูเอกชน', r.gpf.max)}
-        {money('nsf', 'กองทุนการออมแห่งชาติ (กอช.)', r.nsf)}
-        {money('rmf', 'กองทุน RMF', r.rmf.max, `${pct(r.rmf.rate)} ของเงินได้`)}
-        {r.ssf && money('ssf', 'กองทุน SSF', r.ssf.max, `${pct(r.ssf.rate)} ของเงินได้`)}
-        {r.thaiEsg && money('thaiEsg', 'กองทุน ThaiESG / ThaiESGX (เงินใหม่)', r.thaiEsg.max, `${pct(r.thaiEsg.rate)} ของเงินได้ · ไม่นับรวมกลุ่มเกษียณ`)}
-        {r.thaiEsgxLtf > 0 && money('thaiEsgxLtf', 'ThaiESGX ส่วนที่สับเปลี่ยนจาก LTF', r.thaiEsgxLtf)}
+      <Section
+        icon="saving"
+        title={t('ออมเพื่อเกษียณและกองทุน', 'Retirement savings and funds')}
+        subtitle={t(`กลุ่มเกษียณรวมกันไม่เกิน ${fmt(r.retirementCombined)} บาท`, `Retirement group capped at ${fmt(r.retirementCombined)} baht combined`)}
+      >
+        {money(
+          'pensionInsurance',
+          t('เบี้ยประกันชีวิตแบบบำนาญ', 'Pension life insurance premiums'),
+          r.pensionInsurance.max,
+          t(`${pct(r.pensionInsurance.rate)} ของเงินได้`, `${pct(r.pensionInsurance.rate)} of income`),
+        )}
+        {money('pvd', t('กองทุนสำรองเลี้ยงชีพ (PVD) ส่วนที่คุณจ่าย', 'Provident fund (PVD), your contribution'), r.pvd.max, t(`${pct(r.pvd.rate)} ของค่าจ้าง`, `${pct(r.pvd.rate)} of wages`))}
+        {money('gpf', t('กบข. / กองทุนสงเคราะห์ครูเอกชน', 'GPF / Private school teachers welfare fund'), r.gpf.max)}
+        {money('nsf', t('กองทุนการออมแห่งชาติ (กอช.)', 'National Savings Fund (NSF)'), r.nsf)}
+        {money('rmf', t('กองทุน RMF', 'RMF fund'), r.rmf.max, t(`${pct(r.rmf.rate)} ของเงินได้`, `${pct(r.rmf.rate)} of income`))}
+        {r.ssf && money('ssf', t('กองทุน SSF', 'SSF fund'), r.ssf.max, t(`${pct(r.ssf.rate)} ของเงินได้`, `${pct(r.ssf.rate)} of income`))}
+        {r.thaiEsg &&
+          money(
+            'thaiEsg',
+            t('กองทุน ThaiESG / ThaiESGX (เงินใหม่)', 'ThaiESG / ThaiESGX fund (new money)'),
+            r.thaiEsg.max,
+            t(`${pct(r.thaiEsg.rate)} ของเงินได้ · ไม่นับรวมกลุ่มเกษียณ`, `${pct(r.thaiEsg.rate)} of income · not part of the retirement group`),
+          )}
+        {r.thaiEsgxLtf > 0 && money('thaiEsgxLtf', t('ThaiESGX ส่วนที่สับเปลี่ยนจาก LTF', 'ThaiESGX switched from LTF'), r.thaiEsgxLtf)}
       </Section>
 
-      <Section icon="home" title="บ้านและอื่น ๆ">
-        {money('homeLoanInterest', 'ดอกเบี้ยเงินกู้ซื้อที่อยู่อาศัย', r.homeLoanInterest)}
-        {money('socialEnterprise', 'เงินลงทุนในวิสาหกิจเพื่อสังคม', r.socialEnterprise)}
-        {money('politicalDonation', 'บริจาคพรรคการเมือง', r.politicalDonation)}
+      <Section icon="home" title={t('บ้านและอื่น ๆ', 'Home and other')}>
+        {money('homeLoanInterest', t('ดอกเบี้ยเงินกู้ซื้อที่อยู่อาศัย', 'Home loan interest'), r.homeLoanInterest)}
+        {money('socialEnterprise', t('เงินลงทุนในวิสาหกิจเพื่อสังคม', 'Investment in social enterprises'), r.socialEnterprise)}
+        {money('politicalDonation', t('บริจาคพรรคการเมือง', 'Political party donations'), r.politicalDonation)}
       </Section>
 
       {rules.measures.length > 0 && (
-        <Section icon="sparkle" title={`มาตรการพิเศษปี ${rules.taxYear}`} subtitle="มาตรการที่รัฐประกาศเฉพาะปีนี้">
+        <Section icon="sparkle" title={t(`มาตรการพิเศษปี ${rules.taxYear}`, `Special measures for ${rules.taxYear}`)} subtitle={t('มาตรการที่รัฐประกาศเฉพาะปีนี้', 'Measures announced for this year only')}>
           {rules.measures.map((m) => {
             const allowed = line(`measure:${m.id}`)?.allowed ?? 0
+            const description = en ? (m.descriptionEn ?? m.description) : m.description
             return (
-              <Disclosure key={m.id} title={m.label} summary={allowed ? `ลดหย่อนได้ ${fmt(allowed)} บาท` : `สูงสุด ${fmt(m.maxDeduction)} บาท`}>
-                {m.description && <p className="text-sm text-muted">{m.description}</p>}
+              <Disclosure
+                key={m.id}
+                title={t(m.label, m.labelEn ?? m.label)}
+                summary={allowed ? t(`ลดหย่อนได้ ${fmt(allowed)} บาท`, `Deduction: ${fmt(allowed)} baht`) : t(`สูงสุด ${fmt(m.maxDeduction)} บาท`, `Up to ${fmt(m.maxDeduction)} baht`)}
+              >
+                {description && <p className="text-sm text-muted">{description}</p>}
                 {m.inputs.map((inp) => (
                   <MoneyField
                     key={inp.id}
                     id={`m-${m.id}-${inp.id}`}
-                    label={inp.label}
+                    label={t(inp.label, inp.labelEn ?? inp.label)}
                     value={input.measures[m.id]?.[inp.id] ?? 0}
                     onChange={(v) =>
                       update((d) => {
@@ -166,16 +224,25 @@ export function Deductions({ input, update, rules, result }: { input: TaxInput; 
                     max={inp.maxActual}
                   />
                 ))}
-                {m.maxActual && <p className="text-sm text-muted">ยอดจ่ายรวมกันไม่เกิน {fmt(m.maxActual)} บาท</p>}
+                {m.maxActual && <p className="text-sm text-muted">{t(`ยอดจ่ายรวมกันไม่เกิน ${fmt(m.maxActual)} บาท`, `Combined spending up to ${fmt(m.maxActual)} baht`)}</p>}
               </Disclosure>
             )
           })}
         </Section>
       )}
 
-      <Section icon="heart" title="เงินบริจาค" subtitle={`รวมแล้วไม่เกิน ${pct(r.donationCapRate)} ของเงินได้หลังหักลดหย่อน`}>
-        {money('donationEducation', 'บริจาคการศึกษา กีฬา โรงพยาบาลรัฐ', undefined, 'หักได้ 2 เท่า ต้องผ่านระบบ e-Donation')}
-        {money('donationGeneral', 'บริจาคทั่วไป (มูลนิธิ วัด ฯลฯ)')}
+      <Section
+        icon="heart"
+        title={t('เงินบริจาค', 'Donations')}
+        subtitle={t(`รวมแล้วไม่เกิน ${pct(r.donationCapRate)} ของเงินได้หลังหักลดหย่อน`, `Up to ${pct(r.donationCapRate)} of income after deductions in total`)}
+      >
+        {money(
+          'donationEducation',
+          t('บริจาคการศึกษา กีฬา โรงพยาบาลรัฐ', 'Education, sports and public hospital donations'),
+          undefined,
+          t('หักได้ 2 เท่า ต้องผ่านระบบ e-Donation', 'Counts double; must go through e-Donation'),
+        )}
+        {money('donationGeneral', t('บริจาคทั่วไป (มูลนิธิ วัด ฯลฯ)', 'General donations (foundations, temples, etc.)'))}
       </Section>
     </div>
   )

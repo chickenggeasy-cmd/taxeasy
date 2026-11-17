@@ -13,6 +13,8 @@ export interface RateMax {
 export interface MeasureInput {
   id: string
   label: string
+  /** ชื่อภาษาอังกฤษ (ไม่มี → ใช้ชื่อไทย) */
+  labelEn?: string
   multiplier: number
   maxActual?: number
   /** หักได้เป็นขั้น เช่น ทุก 1,000,000 บาท */
@@ -23,7 +25,9 @@ export interface MeasureInput {
 export interface Measure {
   id: string
   label: string
+  labelEn?: string
   description?: string
+  descriptionEn?: string
   inputs: MeasureInput[]
   maxActual?: number
   maxDeduction: number
@@ -40,7 +44,8 @@ export interface TaxRules {
   revision: number
   updatedAt: string
   notes?: string
-  sources: { title: string; url: string }[]
+  notesEn?: string
+  sources: { title: string; titleEn?: string; url: string }[]
   filingDeadlines: { paper: string; online: string }
   /** เกณฑ์เงินได้ทั้งปีที่ต้องยื่นแบบ (ไม่มีในกฎเก่า → ใช้ค่าเริ่มต้นใน lib/filing.ts) */
   filingThresholds?: FilingThresholds
@@ -199,6 +204,7 @@ export type DeductionKey = keyof TaxInput['deductions']
 export interface IncomeLine {
   id: string
   label: string
+  labelEn: string
   gross: number
   expense: number
 }
@@ -206,10 +212,12 @@ export interface IncomeLine {
 export interface DeductionLine {
   id: string
   label: string
+  labelEn: string
   group: 'family' | 'insurance' | 'saving' | 'other' | 'measure' | 'donation'
   claimed: number
   allowed: number
   note?: string
+  noteEn?: string
 }
 
 export interface BracketLine {
@@ -246,4 +254,6 @@ export interface TaxResult {
   effectiveRate: number
   marginalRate: number
   warnings: string[]
+  /** คำเตือนเดียวกับ warnings เป็นภาษาอังกฤษ ลำดับตรงกัน */
+  warningsEn: string[]
 }

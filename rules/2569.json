@@ -3,17 +3,21 @@
   "revision": 1,
   "updatedAt": "2026-10-22",
   "notes": "กฎภาษีเงินได้บุคคลธรรมดา ปีภาษี 2569 (เงินได้ 1 ม.ค. – 31 ธ.ค. 2569 ยื่นภาษีต้นปี 2570) – มาตรการพิเศษของปีนี้ยังรอประกาศ จะอัปเดตเมื่อมีประกาศทางการ",
+  "notesEn": "Personal income tax rules for tax year 2569 (income from 1 Jan to 31 Dec 2569 / 2026, filed in early 2570 / 2027). This year's special measures are not announced yet; they will be added once official.",
   "sources": [
     {
       "title": "กรมสรรพากร – ภาษีเงินได้บุคคลธรรมดา",
+      "titleEn": "Revenue Department – Personal income tax",
       "url": "https://www.rd.go.th/59670.html"
     },
     {
       "title": "FlowAccount – เพดานประกันสังคมใหม่ 2569 (17,500 บาท)",
+      "titleEn": "FlowAccount – New social security ceiling for 2569 (17,500 baht)",
       "url": "https://flowaccount.com/blog/new-social-security-ceiling-2026/"
     },
     {
       "title": "Eastspring – เงื่อนไขสิทธิประโยชน์ทางภาษี ThaiESGX",
+      "titleEn": "Eastspring – ThaiESGX tax benefit conditions",
       "url": "https://www.eastspring.co.th/docs/default-source/fund-documents/criteria-and-conditions-for-using-thaiesgx-tax-benefits.pdf"
     }
   ],

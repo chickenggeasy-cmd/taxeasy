@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { calculateTax, progressiveTax } from '../engine/calculate'
 import type { TaxInput, TaxResult, TaxRules } from '../engine/types'
 import { fmt } from '../lib/format'
+import { useT } from '../lib/lang'
 import { IconTile } from './icons'
 import { TaxCurve } from './TaxCurve'
 
@@ -21,6 +22,7 @@ function Slider({ id, label, value, min, max, step, display, onChange }: { id: s
 
 /** ลองเปลี่ยนตัวเลข แล้วดูว่าภาษีเปลี่ยนไปเท่าไร */
 export function WhatIf({ input, rules, result }: { input: TaxInput; rules: TaxRules; result: TaxResult }) {
+  const t = useT()
   const [salaryPct, setSalaryPct] = useState(0)
   const [extraIncome, setExtraIncome] = useState(0)
   const [extraDeduction, setExtraDeduction] = useState(0)
@@ -41,8 +43,8 @@ export function WhatIf({ input, rules, result }: { input: TaxInput; rules: TaxRu
       <div className="flex items-center gap-3">
         <IconTile name="saving" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold">ลองดูว่า “ถ้า…”</h2>
-          <p className="text-sm text-muted">เลื่อนแถบแล้วดูภาษีเปลี่ยนทันที ไม่กระทบข้อมูลที่กรอกไว้</p>
+          <h2 className="text-lg font-semibold">{t('ลองดูว่า “ถ้า…”', 'Try “what if…”')}</h2>
+          <p className="text-sm text-muted">{t('เลื่อนแถบแล้วดูภาษีเปลี่ยนทันที ไม่กระทบข้อมูลที่กรอกไว้', 'Move a slider to see your tax change at once. Your entered figures stay as they are.')}</p>
         </div>
         {changed && (
           <button
@@ -54,24 +56,24 @@ export function WhatIf({ input, rules, result }: { input: TaxInput; rules: TaxRu
             }}
             className="shrink-0 rounded-xl px-2 py-1 text-sm font-semibold text-accent"
           >
-            รีเซ็ต
+            {t('รีเซ็ต', 'Reset')}
           </button>
         )}
       </div>
 
       {input.income.salary > 0 && (
-        <Slider id="wi-salary" label="เงินเดือนเปลี่ยน" value={salaryPct} min={-30} max={100} step={5} display={`${salaryPct > 0 ? '+' : ''}${salaryPct}%`} onChange={setSalaryPct} />
+        <Slider id="wi-salary" label={t('เงินเดือนเปลี่ยน', 'Salary change')} value={salaryPct} min={-30} max={100} step={5} display={`${salaryPct > 0 ? '+' : ''}${salaryPct}%`} onChange={setSalaryPct} />
       )}
-      <Slider id="wi-income" label="มีงานเสริมเพิ่ม (40(2))" value={extraIncome} min={0} max={1_000_000} step={10_000} display={`+${fmt(extraIncome)}`} onChange={setExtraIncome} />
-      <Slider id="wi-deduction" label="ลดหย่อนเพิ่ม" value={extraDeduction} min={0} max={500_000} step={5_000} display={`+${fmt(extraDeduction)}`} onChange={setExtraDeduction} />
+      <Slider id="wi-income" label={t('มีงานเสริมเพิ่ม (40(2))', 'Extra side income (40(2))')} value={extraIncome} min={0} max={1_000_000} step={10_000} display={`+${fmt(extraIncome)}`} onChange={setExtraIncome} />
+      <Slider id="wi-deduction" label={t('ลดหย่อนเพิ่ม', 'Extra deductions')} value={extraDeduction} min={0} max={500_000} step={5_000} display={`+${fmt(extraDeduction)}`} onChange={setExtraDeduction} />
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-paper p-3">
-          <p className="text-xs text-muted">ภาษีตอนนี้</p>
+          <p className="text-xs text-muted">{t('ภาษีตอนนี้', 'Tax now')}</p>
           <p className="num font-display text-2xl font-semibold">{fmt(result.tax)}</p>
         </div>
         <div className={`rounded-2xl p-3 ${!changed ? 'bg-paper' : diff > 0 ? 'bg-due-soft text-due' : 'bg-refund-soft text-refund'}`}>
-          <p className="text-xs">ถ้า…</p>
+          <p className="text-xs">{t('ถ้า…', 'What if…')}</p>
           <p className="num font-display text-2xl font-semibold">{fmt(tax)}</p>
           {changed && (
             <p className="num text-xs font-semibold">
@@ -83,7 +85,11 @@ export function WhatIf({ input, rules, result }: { input: TaxInput; rules: TaxRu
       </div>
       {incomeDiff > 0 && (
         <p className="num text-sm">
-          รายได้เพิ่ม {fmt(incomeDiff)} บาท เสียภาษีเพิ่ม {fmt(Math.max(0, diff))} บาท · <b>เหลือเข้ากระเป๋า {fmt(incomeDiff - Math.max(0, diff))} บาท</b>
+          {t(
+            `รายได้เพิ่ม ${fmt(incomeDiff)} บาท เสียภาษีเพิ่ม ${fmt(Math.max(0, diff))} บาท`,
+            `Income up ${fmt(incomeDiff)} baht, tax up ${fmt(Math.max(0, diff))} baht`,
+          )}{' '}
+          · <b>{t(`เหลือเข้ากระเป๋า ${fmt(incomeDiff - Math.max(0, diff))} บาท`, `You keep ${fmt(incomeDiff - Math.max(0, diff))} baht`)}</b>
         </p>
       )}
 

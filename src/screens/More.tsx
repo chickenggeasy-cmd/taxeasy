@@ -5,11 +5,12 @@ import { dateText } from '../lib/format'
 import { useLang, useT } from '../lib/lang'
 import { downloadBackup, restoreBackup } from '../lib/backup'
 import type { RulesState } from '../lib/rules'
+import { errorEn } from '../lib/server'
 
 const SOURCE_LABEL = {
-  bundled: 'กฎที่ติดมากับแอป',
-  cached: 'กฎที่บันทึกไว้ในเครื่อง',
-  online: 'กฎล่าสุดจากหลังบ้าน',
+  bundled: ['กฎที่ติดมากับแอป', 'Rules bundled with the app'],
+  cached: ['กฎที่บันทึกไว้ในเครื่อง', 'Rules saved on this device'],
+  online: ['กฎล่าสุดจากหลังบ้าน', 'Latest rules from the backend'],
 } as const
 
 export function More({
@@ -44,12 +45,13 @@ export function More({
   const [confirmReset, setConfirmReset] = useState(false)
   const t = useT()
   const lang = useLang()
-  const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const en = lang === 'en'
+  const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; th: string; en: string } | null>(null)
 
   return (
     <div className="anim-stagger flex flex-col gap-4">
-      <PageHero art="more" title="เพิ่มเติม" subtitle="ปีภาษี กฎที่ใช้คำนวณ และข้อมูลของคุณ" />
-      <Section icon="calendar" title="ปีภาษี" subtitle="เงินได้ระหว่าง 1 ม.ค. – 31 ธ.ค. ของปีที่เลือก">
+      <PageHero art="more" title={t('เพิ่มเติม', 'More')} subtitle={t('ปีภาษี กฎที่ใช้คำนวณ และข้อมูลของคุณ', 'Tax year, calculation rules and your data')} />
+      <Section icon="calendar" title={t('ปีภาษี', 'Tax year')} subtitle={t('เงินได้ระหว่าง 1 ม.ค. – 31 ธ.ค. ของปีที่เลือก', 'Income from 1 Jan to 31 Dec of the chosen year')}>
         <div className="flex flex-wrap gap-2">
           {years.map((y) => (
             <button
@@ -72,50 +74,65 @@ export function More({
 
       <Section
         icon="rules"
-        title="กฎภาษีที่ใช้อยู่"
-        subtitle={`ปี ${rules.taxYear} ฉบับที่ ${rules.revision} · อัปเดต ${rules.updatedAt}`}
+        title={t('กฎภาษีที่ใช้อยู่', 'Tax rules in use')}
+        subtitle={t(
+          `ปี ${rules.taxYear} ฉบับที่ ${rules.revision} · อัปเดต ${rules.updatedAt}`,
+          `Year ${rules.taxYear}, revision ${rules.revision} · updated ${rules.updatedAt}`,
+        )}
         action={
           <button type="button" onClick={onRefresh} disabled={refreshing} className="shrink-0 rounded-xl border border-line px-3 py-2 text-sm font-semibold disabled:opacity-50">
-            {refreshing ? 'กำลังตรวจ…' : 'ตรวจอัปเดต'}
+            {refreshing ? t('กำลังตรวจ…', 'Checking…') : t('ตรวจอัปเดต', 'Check for updates')}
           </button>
         }
       >
         <p className="text-sm">
-          <span className="font-semibold">{SOURCE_LABEL[rulesState.source]}</span>
-          {rulesState.checkedAt && <span className="text-muted"> · ตรวจล่าสุด {new Date(rulesState.checkedAt).toLocaleString('th-TH')}</span>}
+          <span className="font-semibold">{t(SOURCE_LABEL[rulesState.source][0], SOURCE_LABEL[rulesState.source][1])}</span>
+          {rulesState.checkedAt && (
+            <span className="text-muted">
+              {' '}
+              · {t('ตรวจล่าสุด', 'last checked')} {new Date(rulesState.checkedAt).toLocaleString(en ? 'en-GB' : 'th-TH')}
+            </span>
+          )}
         </p>
-        {rulesState.error && <p className="rounded-xl bg-paper px-3 py-2 text-sm text-muted">{rulesState.error}</p>}
-        {rules.notes && <p className="text-sm text-muted">{rules.notes}</p>}
+        {rulesState.error && <p className="rounded-xl bg-paper px-3 py-2 text-sm text-muted">{en ? (rulesState.errorEn ?? rulesState.error) : rulesState.error}</p>}
+        {rules.notes && <p className="text-sm text-muted">{en ? (rules.notesEn ?? rules.notes) : rules.notes}</p>}
         <ul className="flex flex-col gap-1 text-sm">
           {rules.sources.map((s) => (
             <li key={s.url}>
               <a href={s.url} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-2">
-                {s.title}
+                {t(s.title, s.titleEn ?? s.title)}
               </a>
             </li>
           ))}
         </ul>
       </Section>
 
-      <Section icon="send" title="ยื่นภาษีจริง">
-        <p className="text-[15px]">ดูทีละขั้นว่าต้องกรอกตัวเลขไหนในระบบ e-Filing พร้อมรายการเอกสารที่ต้องเตรียม</p>
+      <Section icon="send" title={t('ยื่นภาษีจริง', 'File your return')}>
+        <p className="text-[15px]">
+          {t('ดูทีละขั้นว่าต้องกรอกตัวเลขไหนในระบบ e-Filing พร้อมรายการเอกสารที่ต้องเตรียม', 'Step by step: which figures go where in e-Filing, plus the documents to prepare')}
+        </p>
         <button type="button" onClick={onFiling} className="rounded-2xl bg-accent px-4 py-3 text-center font-semibold text-accent-ink shadow-md">
-          ดูวิธียื่นภาษีและเอกสาร
+          {t('ดูวิธียื่นภาษีและเอกสาร', 'See how to file and what to prepare')}
         </button>
       </Section>
 
-      <Section icon="lock" title="ข้อมูลของคุณ" subtitle="ตัวเลขที่กรอกเก็บไว้ในเครื่องนี้ ไม่ถูกส่งขึ้นเซิร์ฟเวอร์">
+      <Section
+        icon="lock"
+        title={t('ข้อมูลของคุณ', 'Your data')}
+        subtitle={t('ตัวเลขที่กรอกเก็บไว้ในเครื่องนี้ ไม่ถูกส่งขึ้นเซิร์ฟเวอร์', 'Your figures are kept on this device and are not sent to a server')}
+      >
         {!__PREVIEW__ && (
         <div className="flex flex-col gap-2 rounded-2xl bg-paper p-3">
           <p className="text-sm">
-            <b>สำรองข้อมูล</b> <span className="text-muted">ย้ายไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์</span>
+            <b>{t('สำรองข้อมูล', 'Back up')}</b>{' '}
+            <span className="text-muted">{t('ย้ายไปเครื่องใหม่ หรือกันข้อมูลหายเมื่อล้างเบราว์เซอร์', 'Move to a new device, or avoid losing data when the browser is cleared')}</span>
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={downloadBackup} className="rounded-xl bg-accent px-4 py-2 font-semibold text-accent-ink">
-              บันทึกเป็นไฟล์
+              {t('บันทึกเป็นไฟล์', 'Save to a file')}
             </button>
             <label className="cursor-pointer rounded-xl border border-line bg-surface px-4 py-2 font-semibold">
-              กู้คืนจากไฟล์
+              {t('กู้คืนจากไฟล์', 'Restore from a file')}
               <input
                 id="restore-file"
                 type="file"
@@ -127,29 +144,29 @@ export function More({
                   if (!file) return
                   try {
                     const n = restoreBackup(await file.text())
-                    setRestoreMsg({ ok: true, text: `กู้คืน ${n} รายการแล้ว กำลังโหลดใหม่…` })
+                    setRestoreMsg({ ok: true, th: `กู้คืน ${n} รายการแล้ว กำลังโหลดใหม่…`, en: `Restored ${n} items. Reloading…` })
                     setTimeout(() => window.location.reload(), 900)
                   } catch (err) {
-                    setRestoreMsg({ ok: false, text: (err as Error).message })
+                    setRestoreMsg({ ok: false, th: (err as Error).message, en: errorEn(err) })
                   }
                 }}
               />
             </label>
           </div>
-          {restoreMsg && <p className={`text-sm ${restoreMsg.ok ? 'text-refund' : 'text-due'}`}>{restoreMsg.text}</p>}
+          {restoreMsg && <p className={`text-sm ${restoreMsg.ok ? 'text-refund' : 'text-due'}`}>{t(restoreMsg.th, restoreMsg.en)}</p>}
         </div>
         )}
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onExample} className="rounded-xl border border-line px-4 py-2 font-semibold">
-            ใส่ข้อมูลตัวอย่าง
+            {t('ใส่ข้อมูลตัวอย่าง', 'Load sample data')}
           </button>
           {!confirmReset ? (
             <button type="button" onClick={() => setConfirmReset(true)} className="rounded-xl border border-due px-4 py-2 font-semibold text-due">
-              ล้างข้อมูลปี {year}
+              {t(`ล้างข้อมูลปี ${year}`, `Clear data for ${year}`)}
             </button>
           ) : (
             <span className="flex flex-wrap items-center gap-2">
-              <span className="text-sm">ลบข้อมูลที่กรอกทั้งหมดของปี {year}?</span>
+              <span className="text-sm">{t(`ลบข้อมูลที่กรอกทั้งหมดของปี ${year}?`, `Delete everything entered for ${year}?`)}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -158,10 +175,10 @@ export function More({
                 }}
                 className="rounded-xl bg-due px-4 py-2 font-semibold text-surface"
               >
-                ลบ
+                {t('ลบ', 'Delete')}
               </button>
               <button type="button" onClick={() => setConfirmReset(false)} className="rounded-xl border border-line px-4 py-2 font-semibold">
-                ยกเลิก
+                {t('ยกเลิก', 'Cancel')}
               </button>
             </span>
           )}
@@ -193,7 +210,10 @@ export function More({
       </Section>
 
       <p className="px-1 text-xs text-muted">
-        ภาษีง่ายๆ (TaxEasy) เป็นเครื่องมือช่วยประมาณการภาษี ผลลัพธ์อาจต่างจากการคำนวณของกรมสรรพากรในกรณีพิเศษ โปรดตรวจสอบเงื่อนไขกับประกาศทางการก่อนยื่นจริง
+        {t(
+          'ภาษีง่ายๆ (TaxEasy) เป็นเครื่องมือช่วยประมาณการภาษี ผลลัพธ์อาจต่างจากการคำนวณของกรมสรรพากรในกรณีพิเศษ โปรดตรวจสอบเงื่อนไขกับประกาศทางการก่อนยื่นจริง',
+          "TaxEasy is a tool for estimating your tax. Results may differ from the Revenue Department's calculation in special cases. Check the conditions against official announcements before you file.",
+        )}
       </p>
     </div>
   )

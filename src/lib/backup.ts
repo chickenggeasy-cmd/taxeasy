@@ -1,4 +1,5 @@
 // สำรอง/กู้คืนข้อมูลที่ผู้ใช้กรอก (ทุกปีภาษี + การตั้งค่า) เป็นไฟล์ JSON
+import { BilingualError } from './server'
 
 const PREFIXES = ['taxeasy:input:', 'taxeasy:docs:', 'taxeasy:display', 'taxeasy:year']
 
@@ -38,23 +39,23 @@ export function downloadBackup(): void {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-/** คืนจำนวนรายการที่กู้คืน หรือโยน Error พร้อมข้อความภาษาไทย */
+/** คืนจำนวนรายการที่กู้คืน หรือโยน BilingualError (ไทย + อังกฤษ) */
 export function restoreBackup(text: string): number {
   let parsed: BackupFile
   try {
     parsed = JSON.parse(text)
   } catch {
-    throw new Error('ไฟล์นี้ไม่ใช่ไฟล์สำรองของภาษีง่ายๆ')
+    throw new BilingualError('ไฟล์นี้ไม่ใช่ไฟล์สำรองของภาษีง่ายๆ', 'This is not a TaxEasy backup file')
   }
   if (parsed?.app !== 'taxeasy' || typeof parsed.data !== 'object' || parsed.data === null) {
-    throw new Error('ไฟล์นี้ไม่ใช่ไฟล์สำรองของภาษีง่ายๆ')
+    throw new BilingualError('ไฟล์นี้ไม่ใช่ไฟล์สำรองของภาษีง่ายๆ', 'This is not a TaxEasy backup file')
   }
   const entries = Object.entries(parsed.data).filter(([k]) => ours(k))
-  if (entries.length === 0) throw new Error('ไฟล์สำรองนี้ไม่มีข้อมูล')
+  if (entries.length === 0) throw new BilingualError('ไฟล์สำรองนี้ไม่มีข้อมูล', 'This backup file has no data')
   try {
     for (const [k, v] of entries) localStorage.setItem(k, JSON.stringify(v))
   } catch {
-    throw new Error('เบราว์เซอร์นี้ไม่อนุญาตให้บันทึกข้อมูล ลองปิดโหมดไม่ระบุตัวตน')
+    throw new BilingualError('เบราว์เซอร์นี้ไม่อนุญาตให้บันทึกข้อมูล ลองปิดโหมดไม่ระบุตัวตน', 'This browser does not allow saving data. Try turning off private browsing.')
   }
   return entries.length
 }

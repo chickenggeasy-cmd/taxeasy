@@ -180,7 +180,7 @@ export function Summary({
         </div>
       </div>
 
-      {result.warnings.map((w) => (
+      {(lang === 'en' ? result.warningsEn : result.warnings).map((w) => (
         <p key={w} className="rounded-2xl bg-due-soft px-4 py-3 text-sm text-due">
           {w}
         </p>
@@ -228,8 +228,10 @@ export function Summary({
             {result.deductions.map((d) => (
               <li key={d.id} className="flex items-baseline justify-between gap-3 py-2">
                 <span className="min-w-0 text-[15px]">
-                  {d.label}
-                  {d.note && <span className="block text-xs text-muted">{d.note}</span>}
+                  {lang === 'en' ? d.labelEn : d.label}
+                  {(lang === 'en' ? (d.noteEn ?? d.note) : d.note) && (
+                    <span className="block text-xs text-muted">{lang === 'en' ? (d.noteEn ?? d.note) : d.note}</span>
+                  )}
                 </span>
                 <span className="num shrink-0">{fmt(d.allowed)}</span>
               </li>
@@ -298,13 +300,13 @@ function RulesUsed({ rules }: { rules: TaxRules }) {
       <p className="mt-2 text-muted">
         {t(`ปรับปรุงเมื่อ ${updatedText(rules.updatedAt, lang)}`, `Last updated ${updatedText(rules.updatedAt, lang)}`)}
       </p>
-      {rules.notes && <p className="mt-1 text-muted">{rules.notes}</p>}
+      {rules.notes && <p className="mt-1 text-muted">{lang === 'en' ? (rules.notesEn ?? rules.notes) : rules.notes}</p>}
       {sources.length > 0 && (
         <ul className="mt-2 flex flex-col gap-1">
           {sources.map((src) => (
             <li key={src.url}>
               <a href={src.url} target="_blank" rel="noreferrer" className="break-words text-accent underline underline-offset-2">
-                {src.title}
+                {t(src.title, src.titleEn ?? src.title)}
               </a>
             </li>
           ))}
