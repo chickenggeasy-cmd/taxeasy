@@ -12,12 +12,12 @@ const MAX_SUMMARY = 6000;
 const DAILY_LIMIT = 10;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น'], 405);
+    json_response(['ok' => false, 'error' => 'ใช้ POST เท่านั้น', 'errorEn' => 'Use POST only'], 405);
 }
 
 $body = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($body)) {
-    json_response(['ok' => false, 'error' => 'ข้อมูลไม่ถูกต้อง'], 400);
+    json_response(['ok' => false, 'error' => 'ข้อมูลไม่ถูกต้อง', 'errorEn' => 'Invalid data'], 400);
 }
 $category = (string) ($body['category'] ?? '');
 $message = trim((string) ($body['message'] ?? ''));
@@ -28,13 +28,13 @@ $year = (int) ($body['taxYear'] ?? 0);
 $revision = (int) ($body['rulesRevision'] ?? 0);
 
 if (!array_key_exists($category, FEEDBACK_CATEGORIES)) {
-    json_response(['ok' => false, 'error' => 'เลือกหัวข้อที่จะแจ้ง'], 400);
+    json_response(['ok' => false, 'error' => 'เลือกหัวข้อที่จะแจ้ง', 'errorEn' => 'Choose a topic'], 400);
 }
 if ($message === '' || mb_strlen($message) > MAX_MESSAGE) {
-    json_response(['ok' => false, 'error' => 'เขียนรายละเอียด 1–' . number_format(MAX_MESSAGE) . ' ตัวอักษร'], 400);
+    json_response(['ok' => false, 'error' => 'เขียนรายละเอียด 1–' . number_format(MAX_MESSAGE) . ' ตัวอักษร', 'errorEn' => 'Write 1–' . number_format(MAX_MESSAGE) . ' characters of details'], 400);
 }
 if (mb_strlen($contact) > MAX_CONTACT || mb_strlen($summary) > MAX_SUMMARY) {
-    json_response(['ok' => false, 'error' => 'ข้อมูลยาวเกินไป'], 400);
+    json_response(['ok' => false, 'error' => 'ข้อมูลยาวเกินไป', 'errorEn' => 'The data is too long'], 400);
 }
 
 $clientHash = hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|taxeasy-feedback');
@@ -43,7 +43,7 @@ try {
     $st = db()->prepare('SELECT COUNT(*) FROM feedback WHERE client_hash = ? AND created_at >= NOW() - INTERVAL 1 DAY');
     $st->execute([$clientHash]);
     if ((int) $st->fetchColumn() >= DAILY_LIMIT) {
-        json_response(['ok' => false, 'error' => 'วันนี้ส่งครบ ' . DAILY_LIMIT . ' เรื่องแล้ว พรุ่งนี้ส่งต่อได้'], 429);
+        json_response(['ok' => false, 'error' => 'วันนี้ส่งครบ ' . DAILY_LIMIT . ' เรื่องแล้ว พรุ่งนี้ส่งต่อได้', 'errorEn' => 'You have sent ' . DAILY_LIMIT . ' reports today. You can send more tomorrow.'], 429);
     }
     db()->prepare('INSERT INTO feedback (category, message, contact, tax_year, rules_revision, calc_summary, page, client_hash) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
         ->execute([
@@ -60,6 +60,6 @@ try {
     db()->exec('DELETE FROM feedback WHERE created_at < NOW() - INTERVAL 365 DAY');
 } catch (Throwable $e) {
     error_log('[taxeasy] feedback: ' . $e->getMessage());
-    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม ลองใหม่ภายหลัง'], 503);
+    json_response(['ok' => false, 'error' => 'ฐานข้อมูลยังไม่พร้อม ลองใหม่ภายหลัง', 'errorEn' => 'The database is not ready. Try again later.'], 503);
 }
 json_response(['ok' => true]);
